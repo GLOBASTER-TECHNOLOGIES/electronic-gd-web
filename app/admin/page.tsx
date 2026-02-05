@@ -115,6 +115,7 @@ const AdminPage = () => {
               className="w-full border rounded px-3 py-2"
             >
               <option value="">Select Rank</option>
+              <option>ADMIN</option>
               <option>Constable</option>
               <option>Head Constable</option>
               <option>ASI</option>
@@ -139,6 +140,7 @@ const AdminPage = () => {
               className="w-full border rounded px-3 py-2"
             >
               <option value="">Select Role</option>
+              <option value="ADMIN">Admin</option>
               <option value="STAFF">STAFF</option>
               <option value="SO">SO</option>
               <option value="IPF">IPF</option>
