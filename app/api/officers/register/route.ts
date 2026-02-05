@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
@@ -37,7 +37,7 @@ export async function POST(request) {
     ) {
       return NextResponse.json(
         { message: "All required fields must be provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function POST(request) {
     if (existingOfficer) {
       return NextResponse.json(
         { message: "Officer already exists with this Force Number or Mobile" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -76,14 +76,14 @@ export async function POST(request) {
         message: "Officer registered successfully",
         officerId: officer._id,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Officer Registration Error:", error);
 
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
