@@ -28,13 +28,18 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const res = await axios.post("/api/auth/login", formData);
+      const res = await axios.post("/api/officer/login", formData);
 
-      // Save token (temporary – later move to httpOnly cookie)
-      localStorage.setItem("token", res.data.token);
+      /* =========================
+         STORE TOKENS
+      ========================== */
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("officer", JSON.stringify(res.data.officer));
 
-      // Redirect (can be role-based later)
+      /* =========================
+         REDIRECT (TEMP)
+      ========================== */
       router.push("/dashboard");
     } catch (err: any) {
       setError(
