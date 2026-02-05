@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         { message: "All required fields must be provided" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -51,9 +52,15 @@ export async function POST(request: NextRequest) {
     if (existingOfficer) {
       return NextResponse.json(
         { message: "Officer already exists with this Force Number or Mobile" },
-        { status: 409 },
+        { status: 409 }
       );
     }
+
+    /* =========================
+       HASH PASSWORD
+    ========================== */
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     /* =========================
        CREATE OFFICER
@@ -67,7 +74,7 @@ export async function POST(request: NextRequest) {
       division,
       postName,
       mobileNumber,
-      password, // hashing happens later via schema
+      password: hashedPassword, // hashed here
       createdBy: createdBy || null,
     });
 
@@ -76,14 +83,14 @@ export async function POST(request: NextRequest) {
         message: "Officer registered successfully",
         officerId: officer._id,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error) {
     console.error("Officer Registration Error:", error);
 
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
