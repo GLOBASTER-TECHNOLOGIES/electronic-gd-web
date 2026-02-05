@@ -2,11 +2,14 @@ import mongoose from "mongoose";
 
 const officerSchema = new mongoose.Schema(
   {
+    /* =========================
+       OFFICIAL IDENTITY
+    ========================== */
     forceNumber: {
       type: String,
       required: true,
       unique: true,
-      trim: true, // RPF Force No / Belt No
+      trim: true,
     },
 
     name: {
@@ -30,6 +33,9 @@ const officerSchema = new mongoose.Schema(
       ],
     },
 
+    /* =========================
+       APPLICATION ROLE
+    ========================== */
     appRole: {
       type: String,
       required: true,
@@ -37,24 +43,30 @@ const officerSchema = new mongoose.Schema(
       index: true,
     },
 
+    /* =========================
+       POSTING DETAILS
+    ========================== */
     railwayZone: {
       type: String,
       required: true,
-      trim: true, // eg: SR, ER, CR
+      trim: true,
     },
 
     division: {
       type: String,
       required: true,
-      trim: true, // eg: TVC Division
+      trim: true,
     },
 
     postName: {
       type: String,
       required: true,
-      trim: true, // RPF Post / Outpost
+      trim: true,
     },
 
+    /* =========================
+       CONTACT & AUTH
+    ========================== */
     mobileNumber: {
       type: String,
       required: true,
@@ -65,7 +77,18 @@ const officerSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      select: false, // never return password
+      select: false,
+    },
+
+    refreshToken: {
+      type: String,
+      select: false,
+      default: null,
+    },
+
+    lastPasswordChange: {
+      type: Date,
+      default: null,
     },
 
     lastLoginAt: {
@@ -73,15 +96,18 @@ const officerSchema = new mongoose.Schema(
       default: null,
     },
 
+    /* =========================
+       AUDIT
+    ========================== */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Officer",
-      default: null, // IPF / DSC who created this officer
+      default: null,
     },
   },
   {
-    timestamps: true, // createdAt & updatedAt
-  },
+    timestamps: true,
+  }
 );
 
 export default mongoose.model("Officer", officerSchema);
