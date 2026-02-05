@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs"; 
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
+
+/* =========================
+   ENV VALIDATION
+========================= */
+// FIX: Add 'as string' to force TypeScript to treat these as strings, not undefined
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET as string;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
+
+// This runtime check is still good to keep
+if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error("JWT secrets are missing from environment variables");
+}
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
-    const body = await request.json();
-    const { forceNumber, password } = body;
+    const { forceNumber, password } = await request.json();
 
-    /* =========================
-       BASIC VALIDATION
-    ========================== */
     if (!forceNumber || !password) {
       return NextResponse.json(
         { message: "Force Number and Password are required" },
@@ -33,26 +42,9 @@ export async function POST(request: NextRequest) {
     }
 
     /* =========================
-       STATUS CHECKS
+       COMPARE PASSWORD
     ========================== */
-    if (!officer.isActive) {
-      return NextResponse.json(
-        { message: "Officer account is inactive" },
-        { status: 403 }
-      );
-    }
-
-    if (officer.isSuspended) {
-      return NextResponse.json(
-        { message: "Officer account is suspended" },
-        { status: 403 }
-      );
-    }
-
-    /* =========================
-       PASSWORD CHECK
-    ========================== */
-    const isMatch = await officer.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, officer.password);
 
     if (!isMatch) {
       return NextResponse.json(
@@ -62,48 +54,45 @@ export async function POST(request: NextRequest) {
     }
 
     /* =========================
-       JWT GENERATION
+       TOKEN GENERATION
     ========================== */
-    const token = jwt.sign(
-      {
-        officerId: officer._id,
-        forceNumber: officer.forceNumber,
-        appRole: officer.appRole,
-        postName: officer.postName,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+    // Now TypeScript knows JWT_ACCESS_SECRET is definitely a string
+    const accessToken = jwt.sign(
+      { officerId: officer._id, appRole: officer.appRole },
+      JWT_ACCESS_SECRET, 
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      { officerId: officer._id },
+      JWT_REFRESH_SECRET, 
+      { expiresIn: "7d" }
     );
 
     /* =========================
-       UPDATE LAST LOGIN
+       UPDATE & RESPOND
     ========================== */
+    officer.refreshToken = refreshToken;
     officer.lastLoginAt = new Date();
     await officer.save();
 
-    /* =========================
-       RESPONSE (NO PASSWORD)
-    ========================== */
     return NextResponse.json(
       {
         message: "Login successful",
-        token,
+        accessToken,
+        refreshToken,
         officer: {
           id: officer._id,
           forceNumber: officer.forceNumber,
           name: officer.name,
           rank: officer.rank,
           appRole: officer.appRole,
-          railwayZone: officer.railwayZone,
-          division: officer.division,
-          postName: officer.postName,
         },
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Login API Error:", error);
-
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 }
