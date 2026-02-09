@@ -1,245 +1,90 @@
 "use client";
+import React, { useState } from 'react';
+import { Users, UserPlus, LayoutDashboard, LogOut, ShieldCheck } from 'lucide-react';
+// Import your new separate components
+import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 
-import React, { useState } from "react";
-import axios from "axios";
-
-const AdminPage = () => {
-  const [formData, setFormData] = useState({
-    forceNumber: "",
-    name: "",
-    rank: "",
-    appRole: "",
-    railwayZone: "",
-    division: "",
-    postName: "",
-    mobileNumber: "",
-    password: "",
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const res = await axios.post("/api/officer/register", formData);
-
-      setMessage(res.data.message || "Officer created successfully");
-
-      // Reset form after success
-      setFormData({
-        forceNumber: "",
-        name: "",
-        rank: "",
-        appRole: "",
-        railwayZone: "",
-        division: "",
-        postName: "",
-        mobileNumber: "",
-        password: "",
-      });
-    } catch (error: any) {
-      setMessage(
-        error?.response?.data?.message || "Something went wrong"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <div className="min-h-screen text-black bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-semibold mb-6">
-          Create RPF Officer
-        </h1>
-
-        {message && (
-          <div className="mb-4 text-sm font-medium text-center text-blue-700">
-            {message}
+    <div className="flex h-screen bg-gray-50 font-sans">
+      
+      {/* --- SIDEBAR --- */}
+      <aside className="w-64 bg-[#1a233a] text-white flex flex-col fixed h-full">
+        <div className="p-6 flex items-center gap-3 border-b border-gray-700">
+          <div className="p-2 bg-yellow-500 rounded text-[#1a233a]">
+            <ShieldCheck size={24} />
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          {/* Force Number */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Force Number
-            </label>
-            <input
-              type="text"
-              name="forceNumber"
-              value={formData.forceNumber}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
+            <h1 className="font-bold text-lg">RPF Admin</h1>
+            <p className="text-xs text-gray-400">Secure Console</p>
           </div>
+        </div>
 
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          <SidebarItem 
+            icon={<LayoutDashboard size={20} />} 
+            label="Dashboard Overview" 
+            active={activeTab === 'dashboard'} 
+            onClick={() => setActiveTab('dashboard')} 
+          />
+          <SidebarItem 
+            icon={<Users size={20} />} 
+            label="All Officers" 
+            active={activeTab === 'officers'} 
+            onClick={() => setActiveTab('officers')} 
+          />
+          <SidebarItem 
+            icon={<UserPlus size={20} />} 
+            label="Create Officer" 
+            active={activeTab === 'create-officer'} 
+            onClick={() => setActiveTab('create-officer')} 
+          />
+        </nav>
 
-          {/* Rank */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Rank
-            </label>
-            <select
-              name="rank"
-              value={formData.rank}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Select Rank</option>
-              <option>ADMIN</option>
-              <option>Constable</option>
-              <option>Head Constable</option>
-              <option>ASI</option>
-              <option>SI</option>
-              <option>Inspector</option>
-              <option>IPF</option>
-              <option>DSC</option>
-              <option>Sr.DSC</option>
-            </select>
-          </div>
+        <div className="p-4 border-t border-gray-700">
+          <button className="flex items-center gap-3 text-gray-400 hover:text-white transition w-full">
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
 
-          {/* App Role */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              App Role
-            </label>
-            <select
-              name="appRole"
-              value={formData.appRole}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Select Role</option>
-              <option value="ADMIN">Admin</option>
-              <option value="STAFF">STAFF</option>
-              <option value="SO">SO</option>
-              <option value="IPF">IPF</option>
-              <option value="DSC">DSC</option>
-            </select>
-          </div>
+      {/* --- MAIN CONTENT --- */}
+      <main className="flex-1 ml-64 overflow-y-auto">
+        <header className="bg-white shadow-sm p-6 flex justify-between items-center sticky top-0 z-10">
+          <h2 className="text-2xl font-bold text-gray-800">
+            {activeTab === 'dashboard' && 'Dashboard Overview'}
+            {activeTab === 'create-officer' && 'Register Personnel'}
+            {activeTab === 'officers' && 'Officer Records'}
+          </h2>
+          <div className="text-sm text-gray-500">Admin: System Administrator</div>
+        </header>
 
-          {/* Railway Zone */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Railway Zone
-            </label>
-            <input
-              type="text"
-              name="railwayZone"
-              value={formData.railwayZone}
-              onChange={handleChange}
-              required
-              placeholder="eg: SR"
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          {/* Division */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Division
-            </label>
-            <input
-              type="text"
-              name="division"
-              value={formData.division}
-              onChange={handleChange}
-              required
-              placeholder="eg: TVC Division"
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          {/* Post Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Post Name
-            </label>
-            <input
-              type="text"
-              name="postName"
-              value={formData.postName}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          {/* Mobile Number */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Mobile Number
-            </label>
-            <input
-              type="tel"
-              name="mobileNumber"
-              value={formData.mobileNumber}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Temporary Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full border rounded px-3 py-2"
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 disabled:opacity-60"
-            >
-              {loading ? "Creating Officer..." : "Create Officer"}
-            </button>
-          </div>
-
-        </form>
-      </div>
+        <div className="p-8">
+          {/* {activeTab === 'dashboard' && <DashboardStats />} */}
+          {activeTab === 'create-officer' && <CreateOfficerForm />}
+          {activeTab === 'officers' && <div className="text-gray-500 text-center mt-10">List of officers would go here...</div>}
+        </div>
+      </main>
     </div>
   );
-};
+}
 
-export default AdminPage;
+// Helper component for sidebar links
+function SidebarItem({ icon, label, active, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all ${
+        active 
+          ? 'bg-blue-600 text-white shadow-lg' 
+          : 'text-gray-400 hover:bg-[#25304c] hover:text-white'
+      }`}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+}
