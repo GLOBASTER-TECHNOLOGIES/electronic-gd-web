@@ -111,4 +111,5 @@ const officerSchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.model("Officer", officerSchema);
+export default mongoose.models.Officer ||
+  mongoose.model("Officer", officerSchema);
