@@ -16,7 +16,7 @@ export default function LoginPage() {
 
     try {
       await axios.post("/api/officer/login", { forceNumber, password });
-      router.push("/dashboard");
+      router.push("/admin");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     }
