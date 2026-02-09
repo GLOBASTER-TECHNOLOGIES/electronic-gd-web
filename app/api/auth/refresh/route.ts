@@ -1,41 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import dbConnect from "@/config/dbConnect";
+import Officer from "@/models/officer.model";
+
+const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
+const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export async function POST(request: NextRequest) {
   try {
-    const { refreshToken } = await request.json();
+    await dbConnect();
 
+    const refreshToken = request.cookies.get("refreshToken")?.value;
     if (!refreshToken) {
-      return NextResponse.json(
-        { message: "Refresh token required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "No refresh token" }, { status: 401 });
     }
 
-    
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as JwtPayload;
+    const officer = await Officer.findById(decoded.officerId).select("+refreshToken");
+
+    if (!officer || officer.refreshToken !== refreshToken) {
+      return NextResponse.json({ message: "Invalid refresh token" }, { status: 403 });
+    }
 
     const newAccessToken = jwt.sign(
-      {
-        officerId: decoded.officerId,
-      },
-      process.env.JWT_ACCESS_SECRET,
+      { officerId: officer._id, role: officer.appRole },
+      ACCESS_SECRET,
       { expiresIn: "15m" }
     );
 
-    return NextResponse.json(
-      {
-        accessToken: newAccessToken,
-      },
-      { status: 200 }
-    );
-  } catch (err) {
-    return NextResponse.json(
-      { message: "Invalid or expired refresh token" },
-      { status: 403 }
-    );
+    const res = NextResponse.json({ message: "Token refreshed" });
+    res.cookies.set("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 15,
+    });
+
+    return res;
+  } catch {
+    return NextResponse.json({ message: "Refresh failed" }, { status: 403 });
   }
 }
