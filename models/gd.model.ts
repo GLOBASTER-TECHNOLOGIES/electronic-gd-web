@@ -85,6 +85,7 @@ const GeneralDiarySchema = new Schema(
     pageSerialNo: {
       type: Number,
       required: true, // Physical register continuity
+      unique: true,
     },
 
     /* ===== ENTRIES ===== */
