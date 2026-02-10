@@ -1,33 +1,63 @@
 "use client";
-import React, { useState } from 'react';
-import { Search, Filter, Edit, Trash2, Shield, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Edit, Trash2, Shield, Loader2, Phone, MapPin, BadgeCheck, UserCog } from 'lucide-react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 
-// Mock Data
-const OFFICERS = [
-    { id: 1, name: "Vikram Singh", forceId: "RPF-8821", rank: "Inspector", zone: "Northern", status: "Active" },
-    { id: 2, name: "Anjali Sharma", forceId: "RPF-9912", rank: "SI", zone: "Western", status: "On Leave" },
-    { id: 3, name: "Rajesh Kumar", forceId: "RPF-1120", rank: "Constable", zone: "Southern", status: "Active" },
-    { id: 4, name: "Amit Verma", forceId: "RPF-3321", rank: "ASI", zone: "Eastern", status: "Suspended" },
-    { id: 5, name: "Sita Reddy", forceId: "RPF-4455", rank: "IPF", zone: "Central", status: "Active" },
-    { id: 6, name: "Kiran Desai", forceId: "RPF-6678", rank: "Constable", zone: "Western", status: "Active" },
-];
+// interface matching your Mongoose Schema structure
+interface Officer {
+    _id: string;
+    name: string;
+    forceNumber: string;
+    rank: string;
+    appRole: string;
+    railwayZone: string;
+    division: string;
+    postName: string;
+    mobileNumber: string;
+    lastLoginAt?: string;
+    status?: string; // Optional if not in schema yet, logic handled below
+}
 
 export default function OfficerList() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [officers, setOfficers] = useState<Officer[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Filter logic
-    const filteredOfficers = OFFICERS.filter(off =>
-        off.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        off.forceId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const fetchOfficers = async (query = '') => {
+        setLoading(true);
+        try {
+            const url = '/api/officer/get-officer';
+            const response = await axios.get(url, { params: { query: query } });
+
+            if (response.data.success) {
+                setOfficers(response.data.data);
+            } else {
+                toast.error("Failed to load officers");
+            }
+        } catch (error: any) {
+            console.error("Fetch error:", error);
+            const msg = error.response?.data?.message || "Error connecting to server";
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchOfficers(searchTerm);
+        }, 500);
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
 
     return (
         <div className="space-y-6">
-            {/* 1. Header & Actions */}
+            {/* Header & Actions */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Officer Directory</h3>
-                    <p className="text-sm text-gray-500">Manage active personnel and assignments.</p>
+                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">Officer Directory</h3>
+                    <p className="text-sm text-gray-500">Manage personnel, roles, and assignments.</p>
                 </div>
                 <div className="flex w-full sm:w-auto gap-3">
                     <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-sm font-medium shadow-sm transition-colors">
@@ -40,110 +70,141 @@ export default function OfficerList() {
                 </div>
             </div>
 
-            {/* 2. Search Bar */}
-            <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {/* Search Bar */}
+            <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
                 <input
                     type="text"
-                    placeholder="Search by Name or Force ID..."
+                    value={searchTerm}
+                    placeholder="Search by Name, Force ID, or Rank..."
                     className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
 
-            {/* 3. Table Container */}
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50/50 border-b border-gray-200">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold text-gray-600">Officer Name</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600">Rank & ID</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600 hidden md:table-cell">Zone</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600">Status</th>
-                                <th className="px-6 py-4 font-semibold text-gray-600 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredOfficers.map((officer) => (
-                                <tr key={officer.id} className="group hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-200">
-                                                {officer.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <span className="block font-medium text-gray-900">{officer.name}</span>
-                                                <span className="block text-xs text-gray-400 md:hidden">{officer.rank}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-gray-700">{officer.rank}</span>
-                                            <span className="text-xs text-gray-400 font-mono">{officer.forceId}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 hidden md:table-cell text-gray-500">{officer.zone}</td>
-                                    <td className="px-6 py-4">
-                                        <StatusBadge status={officer.status} />
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 hover:bg-blue-50 rounded-lg text-gray-400 hover:text-blue-600 transition-colors" title="Edit">
-                                                <Edit size={16} />
-                                            </button>
-                                            <button className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-600 transition-colors" title="Delete">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Empty State */}
-                {filteredOfficers.length === 0 && (
-                    <div className="py-16 text-center">
+            {/* Content Area */}
+            <div className="min-h-[300px]">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <Loader2 className="animate-spin mb-2 text-blue-500" size={32} />
+                        <p className="text-sm font-medium">Loading records...</p>
+                    </div>
+                ) : officers.length === 0 ? (
+                    <div className="py-16 text-center bg-white rounded-2xl border border-gray-100 border-dashed">
                         <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Shield size={32} className="text-gray-300" />
                         </div>
                         <h3 className="text-gray-900 font-medium">No officers found</h3>
-                        <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters.</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                            {searchTerm ? `No matches for "${searchTerm}"` : "Get started by adding a new officer."}
+                        </p>
+                    </div>
+                ) : (
+                    // Responsive Grid Layout
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {officers.map((officer) => (
+                            <OfficerCard key={officer._id} officer={officer} />
+                        ))}
                     </div>
                 )}
             </div>
 
-            {/* Footer Pagination (Visual Only) */}
-            <div className="flex items-center justify-between text-sm text-gray-500 px-2">
-                <span>Showing {filteredOfficers.length} of {OFFICERS.length} records</span>
-                <div className="flex gap-2">
-                    <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
-                    <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50">Next</button>
+            {/* Footer Pagination */}
+            {!loading && officers.length > 0 && (
+                <div className="flex items-center justify-between text-sm text-gray-500 px-2 pt-2 border-t border-gray-100">
+                    <span>Showing {officers.length} records</span>
+                    <div className="flex gap-2">
+                        <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors" disabled>Previous</button>
+                        <button className="px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" disabled>Next</button>
+                    </div>
                 </div>
+            )}
+        </div>
+    );
+}
+
+// --- NEW RESPONSIVE CARD COMPONENT ---
+function OfficerCard({ officer }: { officer: Officer }) {
+    // Derive status logic (can be updated based on real logic later)
+    const isLoginActive = !!officer.lastLoginAt;
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow p-5 flex flex-col justify-between h-full group">
+
+            {/* Top Section: Identity & Actions */}
+            <div className="flex justify-between items-start mb-4">
+                <div className="flex gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-100 shadow-lg">
+                        {officer.name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-900 leading-tight">{officer.name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                            <span className="font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{officer.rank}</span>
+                            <span className="font-mono text-[10px] tracking-wide">• {officer.forceNumber}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Action Menu (Visible on Hover/Always on Mobile) */}
+                <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Edit size={16} />
+                    </button>
+                    <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Middle Section: Details Grid */}
+            <div className="space-y-3 mb-5">
+                {/* Posting Info */}
+                <div className="bg-gray-50 rounded-xl p-3 text-xs space-y-1.5 border border-gray-100">
+                    <div className="flex items-start gap-2 text-gray-600">
+                        <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
+                        <div>
+                            <span className="font-semibold text-gray-900 block">{officer.postName}</span>
+                            <span className="text-gray-500">{officer.division}, {officer.railwayZone}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Role & Contact Info */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2 p-2 rounded-lg border border-gray-100 text-gray-600">
+                        <UserCog size={14} className="text-gray-400" />
+                        <span className="font-medium">{officer.appRole}</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg border border-gray-100 text-gray-600">
+                        <Phone size={14} className="text-gray-400" />
+                        <span className="font-mono tracking-tight">{officer.mobileNumber}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Section: Status Footer */}
+            <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
+                <div className="flex items-center gap-1.5 text-gray-400">
+                    <div className={`w-2 h-2 rounded-full ${isLoginActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                    {isLoginActive ? 'Active recently' : 'No recent login'}
+                </div>
+                {/* Optional: Add 'Created At' or other meta info here */}
+                {officer.status && <StatusBadge status={officer.status} />}
             </div>
         </div>
     );
 }
 
-// Helper Component for Status Badges
+// Helper Badge
 function StatusBadge({ status }: { status: string }) {
     const styles: Record<string, string> = {
-        Active: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        "On Leave": "bg-amber-100 text-amber-700 border-amber-200",
-        Suspended: "bg-rose-100 text-rose-700 border-rose-200",
+        Active: "text-emerald-700 bg-emerald-50 border-emerald-100",
+        Suspended: "text-rose-700 bg-rose-50 border-rose-100",
+        Inactive: "text-gray-600 bg-gray-50 border-gray-100",
     };
-
-    const defaultStyle = "bg-gray-100 text-gray-700 border-gray-200";
-
     return (
-        <span className={`
-      inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border
-      ${styles[status] || defaultStyle}
-    `}>
-            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${status === 'Active' ? 'bg-emerald-500' : status === 'Suspended' ? 'bg-rose-500' : 'bg-amber-500'}`}></span>
+        <span className={`px-2 py-0.5 rounded-md border font-medium ${styles[status] || styles.Inactive}`}>
             {status}
         </span>
     );
