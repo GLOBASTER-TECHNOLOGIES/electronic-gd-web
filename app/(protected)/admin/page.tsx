@@ -3,37 +3,59 @@ import React, { useState } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardStats from '@/components/admin/DashboardStats';
-import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
+import PremiumOfficerForm from '@/components/admin/CreateOfficerForm';
+import OfficerList from '@/components/admin/OfficerList';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans">
-      {/* 1. Sidebar Section */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
 
-      <main className="flex-1 ml-64 overflow-y-auto">
-        {/* 2. Header Section */}
-        <AdminHeader activeTab={activeTab} />
+      {/* 1. SIDEBAR (Navigation) */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOpen={isSidebarOpen}
+        setIsOpen={setIsSidebarOpen}
+      />
 
-        {/* 3. Dynamic Content Section */}
-        <div className="p-8">
-          {activeTab === 'dashboard' && <DashboardStats />}
+      {/* 2. MAIN LAYOUT WRAPPER */}
+      {/* This margin (lg:ml-64) pushes content right on desktop so sidebar doesn't overlap */}
+      <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64 min-w-0">
 
-          {activeTab === 'create-officer' && (
-            <div className="max-w-4xl mx-auto">
-              <CreateOfficerForm />
-            </div>
-          )}
+        {/* 3. HEADER */}
+        <AdminHeader
+          activeTab={activeTab}
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
 
-          {activeTab === 'officers' && (
-            <div className="bg-white p-6 rounded-xl border border-gray-200 text-center text-gray-500">
-              Officer List Component will be loaded here...
-            </div>
-          )}
-        </div>
-      </main>
+        {/* 4. CONTENT AREA */}
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+
+            {activeTab === 'dashboard' && (
+              <div className="animate-in fade-in duration-500">
+                <DashboardStats />
+              </div>
+            )}
+
+            {activeTab === 'create-officer' && (
+              <div className="animate-in slide-in-from-bottom-4 duration-500">
+                <PremiumOfficerForm />
+              </div>
+            )}
+
+            {activeTab === 'officers' && (
+              <div className="animate-in fade-in duration-500">
+                <OfficerList />
+              </div>
+            )}
+
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
