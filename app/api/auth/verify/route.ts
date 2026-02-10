@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
-    jwt.verify(token, ACCESS_SECRET);
+
+    // FIX: Cast ACCESS_SECRET as string here
+    jwt.verify(token, ACCESS_SECRET as string);
 
     return NextResponse.json({ valid: true });
   } catch {
