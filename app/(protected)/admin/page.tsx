@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from 'react';
-import { Users, UserPlus, LayoutDashboard, LogOut, ShieldCheck } from 'lucide-react';
-// Import your new separate components
+import Sidebar from '@/components/admin/Sidebar';
+import AdminHeader from '@/components/admin/AdminHeader';
+import DashboardStats from '@/components/admin/DashboardStats';
 import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 
 export default function AdminDashboard() {
@@ -9,82 +10,30 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
-      
-      {/* --- SIDEBAR --- */}
-      <aside className="w-64 bg-[#1a233a] text-white flex flex-col fixed h-full">
-        <div className="p-6 flex items-center gap-3 border-b border-gray-700">
-          <div className="p-2 bg-yellow-500 rounded text-[#1a233a]">
-            <ShieldCheck size={24} />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg">RPF Admin</h1>
-            <p className="text-xs text-gray-400">Secure Console</p>
-          </div>
-        </div>
+      {/* 1. Sidebar Section */}
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          <SidebarItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard Overview" 
-            active={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')} 
-          />
-          <SidebarItem 
-            icon={<Users size={20} />} 
-            label="All Officers" 
-            active={activeTab === 'officers'} 
-            onClick={() => setActiveTab('officers')} 
-          />
-          <SidebarItem 
-            icon={<UserPlus size={20} />} 
-            label="Create Officer" 
-            active={activeTab === 'create-officer'} 
-            onClick={() => setActiveTab('create-officer')} 
-          />
-        </nav>
-
-        <div className="p-4 border-t border-gray-700">
-          <button className="flex items-center gap-3 text-gray-400 hover:text-white transition w-full">
-            <LogOut size={20} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* --- MAIN CONTENT --- */}
       <main className="flex-1 ml-64 overflow-y-auto">
-        <header className="bg-white shadow-sm p-6 flex justify-between items-center sticky top-0 z-10">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {activeTab === 'dashboard' && 'Dashboard Overview'}
-            {activeTab === 'create-officer' && 'Register Personnel'}
-            {activeTab === 'officers' && 'Officer Records'}
-          </h2>
-          <div className="text-sm text-gray-500">Admin: System Administrator</div>
-        </header>
+        {/* 2. Header Section */}
+        <AdminHeader activeTab={activeTab} />
 
+        {/* 3. Dynamic Content Section */}
         <div className="p-8">
-          {/* {activeTab === 'dashboard' && <DashboardStats />} */}
-          {activeTab === 'create-officer' && <CreateOfficerForm />}
-          {activeTab === 'officers' && <div className="text-gray-500 text-center mt-10">List of officers would go here...</div>}
+          {activeTab === 'dashboard' && <DashboardStats />}
+
+          {activeTab === 'create-officer' && (
+            <div className="max-w-4xl mx-auto">
+              <CreateOfficerForm />
+            </div>
+          )}
+
+          {activeTab === 'officers' && (
+            <div className="bg-white p-6 rounded-xl border border-gray-200 text-center text-gray-500">
+              Officer List Component will be loaded here...
+            </div>
+          )}
         </div>
       </main>
     </div>
-  );
-}
-
-// Helper component for sidebar links
-function SidebarItem({ icon, label, active, onClick }) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-3 w-full px-4 py-3 rounded-lg transition-all ${
-        active 
-          ? 'bg-blue-600 text-white shadow-lg' 
-          : 'text-gray-400 hover:bg-[#25304c] hover:text-white'
-      }`}
-    >
-      {icon}
-      <span className="font-medium">{label}</span>
-    </button>
   );
 }
