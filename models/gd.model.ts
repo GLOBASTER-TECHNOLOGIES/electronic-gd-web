@@ -18,6 +18,11 @@ const EntrySchema = new Schema(
       default: Date.now,
     },
 
+    timeOfSubmission: {
+      type: Date,
+      required: true, // Actual time user clicked submit (from frontend)
+    },
+
     abstract: {
       type: String,
       required: true,
