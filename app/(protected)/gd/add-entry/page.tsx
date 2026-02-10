@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Shield, BookOpen, PenTool, Save, AlertTriangle } from "lucide-react";
+import { Save, ShieldAlert, Loader2 } from "lucide-react";
 
 interface UserProfile {
   _id: string;
@@ -16,25 +16,19 @@ interface UserProfile {
 
 export default function AddGDEntryPage() {
   const router = useRouter();
-
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(true);
+  
+  const [time, setTime] = useState(new Date());
   const [formData, setFormData] = useState({
     abstract: "",
     details: "",
   });
 
-  // Current Date for the Header
-  const today = new Date();
-  const dateString = today.toLocaleDateString('en-IN', { 
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-  });
-  const timeString = today.toLocaleTimeString('en-IN', { 
-    hour: '2-digit', minute: '2-digit' 
-  });
-
   useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+
     const fetchUser = async () => {
       try {
         const res = await axios.get("/api/auth/me", {
@@ -49,186 +43,157 @@ export default function AddGDEntryPage() {
     };
 
     fetchUser();
+    return () => clearInterval(timer);
   }, [router]);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
     setLoading(true);
 
     try {
-      const payload = {
-        abstract: formData.abstract,
-        details: formData.details,
+      await axios.post("/api/gd/create-entry", {
+        ...formData,
         division: user.division,
         post: user.postName,
         officerId: user._id,
         officerName: user.name,
         rank: user.rank,
         forceNumber: user.forceNumber,
-      };
-
-      await axios.post("/api/gd/create-entry", payload);
+      });
 
       setFormData({ abstract: "", details: "" });
       router.refresh();
-      alert("Entry successfully recorded in the General Diary.");
+      alert("Entry Recorded. Reference Number Generated.");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to save entry");
+      alert(err?.response?.data?.message || "Failed");
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetchingUser) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-gray-600 gap-3">
-        <div className="w-8 h-8 border-4 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-medium tracking-wide uppercase">Retrieving Personnel File...</p>
-      </div>
-    );
-  }
-
+  if (fetchingUser) return null;
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans flex justify-center items-start">
+    <div className="min-h-screen bg-[#eef0f3] py-8 px-4 flex justify-center font-sans text-gray-900">
       
-      {/* Logbook Container */}
-      <div className="w-full max-w-4xl bg-[#fdfbf7] shadow-2xl border border-gray-300 relative overflow-hidden flex flex-col md:flex-row min-h-[800px]">
+      {/* Document Container */}
+      <div className="w-full max-w-3xl bg-white shadow-sm border border-gray-300 min-h-[900px] flex flex-col">
         
-        {/* Left Binding / Spine (Visual Decoration) */}
-        <div className="hidden md:block w-12 bg-[#2c3e50] border-r-2 border-gray-400 relative">
-             <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] bg-[#34495e]"></div>
-        </div>
+        {/* --- HEADER SECTION --- */}
+        <header className="border-b-2 border-black p-8 pb-4">
+            <div className="flex justify-between items-start mb-6">
+                <div>
+                    <h1 className="text-2xl font-black uppercase tracking-tight leading-none">General Diary</h1>
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mt-1">Railway Protection Force</p>
+                </div>
+                <div className="text-right">
+                    <div className="inline-block border border-gray-900 px-2 py-1">
+                        <p className="text-[10px] font-bold uppercase">Form No.</p>
+                        <p className="text-sm font-mono font-bold">RPF-GD-2026</p>
+                    </div>
+                </div>
+            </div>
 
-        {/* Main Page Content */}
-        <div className="flex-1 p-8 md:p-12 relative">
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm border-t border-gray-200 pt-4">
+                <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Station / Post</span>
+                    <span className="block font-semibold uppercase">{user.postName}</span>
+                </div>
+                <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Division</span>
+                    <span className="block font-semibold uppercase">{user.division}</span>
+                </div>
+                <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date</span>
+                    <span className="block font-mono">{time.toLocaleDateString('en-GB')}</span>
+                </div>
+                <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time</span>
+                    <span className="block font-mono text-red-700 font-bold">{time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                </div>
+            </div>
             
-            {/* Paper Texture Overlay (Optional, using CSS opacity) */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
-                 style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper.png")' }}>
-            </div>
-
-            {/* Official Header Block */}
-            <div className="border-b-4 border-double border-gray-800 pb-6 mb-8 flex flex-col items-center justify-center text-center">
-                <div className="flex items-center gap-3 mb-2">
-                    <Shield className="w-8 h-8 text-blue-900" />
-                    <h1 className="text-2xl md:text-3xl font-serif font-bold text-gray-900 uppercase tracking-wider">
-                        General Diary
-                    </h1>
-                    <Shield className="w-8 h-8 text-blue-900" />
+            <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-2 gap-8">
+                 <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Duty Officer</span>
+                    <span className="block font-medium">{user.name}</span>
                 </div>
-                <div className="text-xs font-bold text-gray-500 tracking-[0.3em] uppercase mb-4">
-                    Railway Protection Force
-                </div>
-                
-                {/* Meta Data Grid */}
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 text-sm border-t border-gray-300 pt-4 mt-2">
-                    <div className="text-left space-y-1">
-                        <p><span className="font-bold text-gray-600 uppercase text-xs w-24 inline-block">Station:</span> {user.postName}</p>
-                        <p><span className="font-bold text-gray-600 uppercase text-xs w-24 inline-block">Division:</span> {user.division}</p>
-                        <p><span className="font-bold text-gray-600 uppercase text-xs w-24 inline-block">Date:</span> {dateString}</p>
-                    </div>
-                    <div className="text-left md:text-right space-y-1">
-                        <p><span className="font-bold text-gray-600 uppercase text-xs inline-block md:hidden w-24">Officer:</span> {user.name} ({user.rank})</p>
-                        <p><span className="font-bold text-gray-600 uppercase text-xs inline-block md:hidden w-24">Force No:</span> {user.forceNumber}</p>
-                        <p className="text-blue-900 font-mono font-medium"><span className="font-bold text-gray-600 uppercase text-xs inline-block md:hidden w-24">Time:</span> {timeString}</p>
-                    </div>
+                 <div>
+                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Rank & ID</span>
+                    <span className="block font-medium">{user.rank} / {user.forceNumber}</span>
                 </div>
             </div>
+        </header>
 
-            {/* Form Area */}
-            <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+        {/* --- BODY SECTION --- */}
+        <form onSubmit={handleSubmit} className="flex-1 p-8 md:p-10 flex flex-col gap-8">
+            
+            {/* Subject Line */}
+            <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Subject</label>
+                <input
+                    type="text"
+                    name="abstract"
+                    value={formData.abstract}
+                    onChange={handleChange}
+                    required
+                    placeholder="ENTER SUBJECT HERE..."
+                    className="w-full text-lg font-bold border-b-2 border-gray-200 focus:border-black py-2 outline-none uppercase placeholder:text-gray-300 transition-colors"
+                />
+            </div>
+
+            {/* --- BOOK PAGE ENTRY AREA --- */}
+            <div className="space-y-2 flex-1 flex flex-col">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Occurrence Details</label>
                 
-                {/* Subject Field */}
-                <div className="relative">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                        <BookOpen size={14} /> Subject / Abstract
-                    </label>
-                    <input
-                        type="text"
-                        name="abstract"
-                        value={formData.abstract}
+                {/* The Ruled Page */}
+                <div className="flex-1 w-full border border-gray-200 bg-white shadow-inner relative">
+                    <textarea
+                        name="details"
+                        value={formData.details}
                         onChange={handleChange}
                         required
-                        className="w-full bg-transparent border-b-2 border-gray-300 py-2 text-lg font-medium text-gray-900 focus:outline-none focus:border-blue-900 transition-colors placeholder:text-gray-400/70"
-                        placeholder="e.g. Charge Assumption, Patrol Report..."
+                        className="w-full h-full resize-none outline-none text-xl leading-[2.5rem] font-serif text-gray-900 bg-transparent px-6 py-0"
+                        style={{
+                            // 1. Create the horizontal lines
+                            backgroundImage: 'linear-gradient(transparent 96%, #e2e8f0 97%, #e2e8f0 100%)',
+                            // 2. Set size to match line-height exactly (40px)
+                            backgroundSize: '100% 2.5rem',
+                            // 3. Ensure background scrolls with text
+                            backgroundAttachment: 'local',
+                            lineHeight: '2.5rem'
+                        }}
+                        placeholder="Record the occurrence here..."
                     />
                 </div>
+            </div>
 
-                {/* Details Field (Ruled Paper Look) */}
-                <div className="relative">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                         <PenTool size={14} /> Full Entry Details
-                    </label>
-                    
-                    <div className="relative w-full border border-gray-300 bg-white shadow-inner">
-                        {/* Ruled Lines CSS Background */}
-                        <textarea
-                            name="details"
-                            value={formData.details}
-                            onChange={handleChange}
-                            required
-                            rows={12}
-                            style={{
-                                backgroundImage: 'repeating-linear-gradient(transparent, transparent 31px, #e5e7eb 31px, #e5e7eb 32px)',
-                                lineHeight: '32px',
-                                padding: '8px 16px',
-                                backgroundAttachment: 'local'
-                            }}
-                            className="w-full bg-transparent resize-none text-gray-800 text-base focus:outline-none focus:bg-blue-50/10 transition-colors block"
-                            placeholder="Record the occurrence here..."
-                        />
-                    </div>
-                    
-                    <div className="flex justify-between items-start mt-2">
-                         <p className="text-xs text-amber-700 flex items-center gap-1">
-                             <AlertTriangle size={12} />
-                             Entries are immutable. Verify before signing.
-                         </p>
-                         <p className="text-xs text-gray-400 text-right">
-                             Pg 1 / 1
-                         </p>
-                    </div>
+            {/* --- FOOTER / SIGNATURE --- */}
+            <div className="pt-6 border-t-2 border-black flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-red-600 font-bold uppercase">
+                    <ShieldAlert size={14} />
+                    <span>Official Record • Cannot be modified</span>
                 </div>
 
-                {/* Signature / Submit Block */}
-                <div className="pt-8 mt-8 border-t border-dashed border-gray-300 flex flex-col md:flex-row items-center justify-between gap-6">
-                    
-                    <div className="text-center md:text-left">
-                        <div className="h-10">
-                            {/* Visual placeholder for signature if you had an image */}
-                            <span className="font-cursive text-2xl text-blue-900 opacity-80 rotate-[-5deg] block" style={{ fontFamily: 'cursive' }}>
-                                {user.name}
-                            </span>
-                        </div>
-                        <div className="border-t border-gray-400 w-48 mt-1 pt-1">
-                            <p className="text-[10px] uppercase font-bold text-gray-500">Officer's Signature</p>
-                            <p className="text-[10px] text-gray-400">{user.forceNumber}</p>
-                        </div>
-                    </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-black text-white px-8 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                    {loading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                    Sign & Submit
+                </button>
+            </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="group relative px-8 py-3 bg-[#2c3e50] text-[#fdfbf7] font-medium text-sm tracking-wide shadow-lg hover:bg-[#1a252f] hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
-                    >
-                        <span className="relative z-10 flex items-center gap-2">
-                            {loading ? "Recording..." : <> <Save size={16} /> RECORD ENTRY </>}
-                        </span>
-                    </button>
-                </div>
+        </form>
 
-            </form>
-        </div>
       </div>
     </div>
   );
