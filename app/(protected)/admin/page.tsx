@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import Sidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardStats from '@/components/admin/DashboardStats';
-import PremiumOfficerForm from '@/components/admin/CreateOfficerForm';
 import OfficerList from '@/components/admin/OfficerList';
+import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
             {activeTab === 'create-officer' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
-                <PremiumOfficerForm />
+                <CreateOfficerForm />
               </div>
             )}
 
