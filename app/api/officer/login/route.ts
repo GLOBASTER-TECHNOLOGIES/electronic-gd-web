@@ -28,13 +28,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ✅ FIX: Use 'id' instead of 'officerId' to match your /me route
     const accessToken = jwt.sign(
-      { officerId: officer._id, role: officer.appRole },
+      { id: officer._id, role: officer.appRole },
       ACCESS_SECRET,
       { expiresIn: "15m" },
     );
 
-    const refreshToken = jwt.sign({ officerId: officer._id }, REFRESH_SECRET, {
+    // ✅ FIX: Consistency for refresh token too
+    const refreshToken = jwt.sign({ id: officer._id }, REFRESH_SECRET, {
       expiresIn: "7d",
     });
 
@@ -57,7 +59,7 @@ export async function POST(request: NextRequest) {
     // 🔒 HTTP-ONLY COOKIES
     res.cookies.set("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production", // Safe for localhost
       sameSite: "strict",
       path: "/",
       maxAge: 60 * 15,
@@ -65,14 +67,15 @@ export async function POST(request: NextRequest) {
 
     res.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
 
     return res;
-  } catch {
+  } catch (error) {
+    console.error("Login Error:", error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
