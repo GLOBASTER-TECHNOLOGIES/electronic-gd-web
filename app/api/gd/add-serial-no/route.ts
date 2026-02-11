@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import GeneralDiary from "@/models/gd.model";
 
+/* =========================
+   Helper: True IST Midnight 
+   (Copy-pasted from your POST route for perfect alignment)
+========================= */
+function normalizeDiaryDate(date = new Date()) {
+  const now = date.getTime();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now + istOffset);
+  istTime.setUTCHours(0, 0, 0, 0);
+  return new Date(istTime.getTime() - istOffset);
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     await dbConnect();
@@ -9,6 +21,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { post, pageSerialNo } = body;
 
+    // 1. Basic Validation
     if (!post || pageSerialNo === undefined) {
       return NextResponse.json(
         { success: false, message: "Missing required fields." },
@@ -16,22 +29,25 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // 1. Target Today's Date
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // 2. Strict IST Date Check
+    // This ensures 'today' in India is correctly calculated before querying UTC MongoDB
+    const today = normalizeDiaryDate();
 
-    // 2. First, check if a serial number already exists
+    // 3. Find today's register only
     const existingGD = await GeneralDiary.findOne({ post, diaryDate: today });
 
     if (!existingGD) {
       return NextResponse.json(
-        { success: false, message: "Today's register has not been initiated." },
+        { 
+          success: false, 
+          message: "Today's General Diary has not been opened yet. Previous days cannot be updated." 
+        },
         { status: 404 }
       );
     }
 
-    // 3. One-Time Update Enforcement
-    // Check if pageSerialNo is already set (assuming 0 is the default/empty state)
+    // 4. One-Time Update Enforcement
+    // Prevents overwriting once a serial number is already authenticated
     if (existingGD.pageSerialNo !== 0 && existingGD.pageSerialNo !== undefined) {
       return NextResponse.json(
         { 
@@ -42,14 +58,14 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // 4. Perform the single-time update
+    // 5. Apply the update
     existingGD.pageSerialNo = pageSerialNo;
     await existingGD.save();
 
     return NextResponse.json(
       { 
         success: true, 
-        message: "Official Serial Number locked successfully.", 
+        message: "Official Serial Number locked for today's register.", 
         data: { pageSerialNo: existingGD.pageSerialNo } 
       },
       { status: 200 }
@@ -57,6 +73,15 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error: any) {
     console.error("Lock Serial Error:", error);
+
+    // Handle Concurrency (VersionError) if two people try to update at the exact same time
+    if (error.name === "VersionError") {
+      return NextResponse.json(
+        { message: "Concurrency conflict. Please try again." },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }
