@@ -87,7 +87,7 @@ export const generateGDPDF = async (gd: GDData) => {
   });
 
   doc.setFontSize(14 * SCALE);
-  doc.text("E", 340, 85);
+  doc.text("E", 340, 90);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16 * SCALE);
@@ -117,7 +117,7 @@ export const generateGDPDF = async (gd: GDData) => {
   doc.text("Lines/Post/O.P..........................", 360, startY);
 
   doc.setFontSize(10 * SCALE);
-  doc.text(gd.post.toUpperCase(), 427, startY - 2);
+  doc.text(gd.post.toUpperCase(), 434, startY - 2);
 
   // --- 4. THE TABLE ---
   const tableColumn = [
