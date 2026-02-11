@@ -183,7 +183,10 @@ export const generateGDPDF = async (gd: GDData) => {
       lineWidth: 0.5,
       lineColor: [0, 0, 0],
       halign: "center",
+      valign: "middle", // 🔥 Centers text vertically
+      cellPadding: { top: 10, bottom: 6, left: 6, right: 6 }, // 🔥 Push text downward
     },
+
     columnStyles: {
       0: { cellWidth: 70, halign: "center" },
       1: { cellWidth: 40, halign: "center" },
