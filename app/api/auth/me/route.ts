@@ -5,7 +5,6 @@ import Officer from "@/models/officer.model";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("req came");
     await dbConnect();
 
     // 1. Get Token
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
     // ... inside app/api/auth/me/route.ts
 
     // ADD THESE LOGS:
-    console.log("Token ID:", decoded.id);
+    // console.log("Token ID:", decoded.id);
 
     // 3. Handle Field Selection (e.g. ?fields=name,rank)
     const searchParams = request.nextUrl.searchParams;
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // 4. Fetch Officer Details
     const officer = await Officer.findById(decoded.id).select(selectString);
-    console.log("Officer Found:", officer); // This is likely null right now
+    // console.log("Officer Found:", officer); // This is likely null right now
 
     if (!officer) {
       return NextResponse.json(
