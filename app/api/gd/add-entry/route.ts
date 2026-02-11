@@ -4,12 +4,14 @@ import GeneralDiary from "@/models/gd.model";
 import mongoose from "mongoose";
 
 /* =========================
-   Helper: normalize date
+   Helper: True IST Midnight
 ========================= */
 function normalizeDiaryDate(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const now = date.getTime();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now + istOffset);
+  istTime.setUTCHours(0, 0, 0, 0);
+  return new Date(istTime.getTime() - istOffset);
 }
 
 export async function POST(request: NextRequest) {
@@ -25,55 +27,47 @@ export async function POST(request: NextRequest) {
       officerName,
       rank,
       forceNumber,
+      timeOfSubmission,
     } = await request.json();
 
-    /* =========================
-       BASIC VALIDATION
-    ========================== */
+    // 1. Validation
     if (
       !division ||
       !post ||
       !abstract ||
       !details ||
-      !officerId
+      !officerId ||
+      !timeOfSubmission
     ) {
       return NextResponse.json(
         { message: "Required fields missing" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const today = normalizeDiaryDate();
 
-    /* =========================
-       FIND OR CREATE GD
-    ========================== */
-    let gd = await GeneralDiary.findOne({
-      post,
-      diaryDate: today,
-      status: "ACTIVE",
-    });
+    // 2. Find Existing GD
+    const gd = await GeneralDiary.findOne({ post, diaryDate: today });
 
+    // 🛑 STOP: If GD doesn't exist, fail immediately.
     if (!gd) {
-      gd = await GeneralDiary.create({
-        division,
-        post,
-        diaryDate: today,
-        pageSerialNo: Date.now(), // simple running number, replace later if needed
-        createdBy: officerId,
-        lastEntryNo: 0,
-        entries: [],
-      });
+      return NextResponse.json(
+        {
+          message:
+            "General Diary for today has not been opened yet. Please open the GD first.",
+        },
+        { status: 404 },
+      );
     }
 
-    /* =========================
-       AUTO INCREMENT ENTRY NO
-    ========================== */
-    const nextEntryNo = gd.lastEntryNo + 1;
+    // 3. Add Entry (Only if GD exists)
+    const nextEntryNo = (gd.lastEntryNo || 0) + 1;
 
     const entry = {
       entryNo: nextEntryNo,
-      entryTime: new Date(), // FULL timestamp
+      entryTime: new Date(),
+      timeOfSubmission: new Date(timeOfSubmission),
       abstract,
       details,
       signature: {
@@ -81,6 +75,7 @@ export async function POST(request: NextRequest) {
         officerName,
         rank,
         forceNumber,
+        post: post, // Saved correctly
         signedAt: new Date(),
       },
     };
@@ -91,17 +86,22 @@ export async function POST(request: NextRequest) {
     await gd.save();
 
     return NextResponse.json(
-      {
-        message: "GD entry added successfully",
-        entryNo: nextEntryNo,
-      },
-      { status: 201 }
+      { message: "GD entry added successfully", entryNo: nextEntryNo },
+      { status: 201 },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("GD Entry Error:", error);
+
+    if (error.name === "VersionError") {
+      return NextResponse.json(
+        { message: "Concurrency conflict. Please try again." },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
