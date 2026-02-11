@@ -15,7 +15,8 @@ import {
   Hash,
   BookOpen,
   ArrowRight,
-  UserPlus // Icon for Visiting Officer
+  UserPlus,
+  LogOut // New icon for logout
 } from "lucide-react";
 
 // ... Interfaces remain the same ...
@@ -48,6 +49,19 @@ export default function PostsDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const res = await axios.get("/api/auth/logout");
+      if (res.data.success) {
+        router.push("/login");
+      }
+    } catch (err) {
+      console.error("Logout failed", err);
+      // Fallback redirect if API fails
+      router.push("/login");
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Loader2 className="animate-spin text-gray-400" size={32} />
@@ -55,10 +69,10 @@ export default function PostsDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto space-y-6">
 
-        {/* OFFICIAL HEADER */}
+        {/* OFFICIAL HEADER WITH LOGOUT */}
         <div className="bg-white border-b-2 border-slate-900 p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -68,18 +82,30 @@ export default function PostsDashboard() {
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Railway Protection Force • Official Use Only</p>
               </div>
             </div>
-            <div className="flex items-center gap-6 text-right">
-              <div className="hidden sm:block">
+            
+            <div className="flex items-center gap-4 md:gap-8 justify-between md:justify-end">
+              <div className="hidden sm:block text-right">
                 <p className="text-[10px] font-bold text-gray-400 uppercase">System Date</p>
                 <p className="text-sm font-bold text-slate-900">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
               </div>
-              <ShieldCheck className="text-emerald-600" size={28} />
+              
+              <div className="flex items-center gap-3 border-l border-gray-200 pl-4 md:pl-8">
+                <ShieldCheck className="text-emerald-600" size={24} />
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-100 rounded text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                >
+                  <LogOut size={14} />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700 text-sm font-bold uppercase">
+          <div className="bg-red-50 border border-red-200 p-4 rounded text-red-700 text-sm font-bold uppercase flex items-center gap-2">
+            <AlertCircle size={18} />
             {error}
           </div>
         ) : (
@@ -147,7 +173,7 @@ export default function PostsDashboard() {
                   <ArrowRight size={18} className="text-gray-300 group-hover:text-slate-900 transition-colors" />
                 </button>
 
-                {/* 2. ADD ENTRY (VISITING OFFICER) - NEW ACTION */}
+                {/* 2. ADD ENTRY (VISITING OFFICER) */}
                 <button
                   onClick={() => router.push("/post/visiting-officer-login")}
                   className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
