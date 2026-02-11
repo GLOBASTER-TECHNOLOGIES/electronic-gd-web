@@ -5,19 +5,45 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Download, Shield, Calendar, MapPin } from "lucide-react";
 import { generateGDPDF } from "@/config/gdPdfGenerator";
-// Import the generator
+// Import the generator we created
+
+// Types to match your data structure
+interface Entry {
+  _id: string;
+  entryNo: number;
+  timeOfSubmission: string;
+  abstract?: string; // Optional in case data is missing
+  details?: string;
+  signature: {
+    officerName: string;
+    rank: string;
+    post: string;
+    forceNumber: string;
+  };
+}
+
+interface GDData {
+  _id: string;
+  division: string;
+  post: string;
+  diaryDate: string;
+  pageSerialNo: number;
+  entries: Entry[];
+}
 
 export default function SingleGDViewPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [gd, setGd] = useState<any>(null);
+  const [gd, setGd] = useState<GDData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchGD = async () => {
       try {
         const res = await axios.get(`/api/gd/get-entry?id=${id}`);
-        setGd(res.data.data);
+        if(res.data.success) {
+            setGd(res.data.data);
+        }
       } catch (err) {
         alert("Failed to load register details");
       } finally {
@@ -40,7 +66,12 @@ export default function SingleGDViewPage() {
     </div>
   );
 
-  if (!gd) return <div>Register not found</div>;
+  if (!gd) return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
+        <p>Register not found.</p>
+        <button onClick={() => router.back()} className="mt-4 text-blue-600 hover:underline">Go Back</button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-900">
@@ -71,7 +102,6 @@ export default function SingleGDViewPage() {
                 </div>
                 
                 <div className="text-right">
-                    {/* ✅ UPDATED BUTTON: Calls PDF Generator */}
                     <button 
                         onClick={handleDownloadPDF}
                         className="bg-white text-black px-4 py-2 rounded font-bold uppercase text-xs tracking-wider hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-lg"
@@ -110,7 +140,7 @@ export default function SingleGDViewPage() {
                             </td>
                         </tr>
                     ) : (
-                        gd.entries.map((entry: any) => (
+                        gd.entries.map((entry) => (
                             <tr key={entry._id} className="group">
                                 <td className="py-4 pr-4 font-mono text-xs font-bold text-gray-600 align-top">
                                     {new Date(entry.timeOfSubmission).toLocaleTimeString('en-IN', {
@@ -121,21 +151,25 @@ export default function SingleGDViewPage() {
                                     {entry.entryNo}
                                 </td>
                                 <td className="py-4 px-4 font-bold uppercase text-gray-800 text-xs align-top">
-                                    {entry.abstract}
+                                    {/* Use optional chaining in case data is missing */}
+                                    {entry.abstract || <span className="text-red-400 italic">Missing Data</span>}
                                 </td>
                                 <td className="py-4 px-4 text-gray-800 font-serif text-sm leading-relaxed align-top whitespace-pre-wrap">
-                                    {entry.details}
+                                    {entry.details || <span className="text-gray-400 italic">No details recorded...</span>}
                                 </td>
                                 <td className="py-4 pl-4 align-top">
                                     <div className="flex flex-col">
                                         <span className="font-bold text-xs uppercase text-black">
-                                            {entry.signature.officerName}
+                                            {entry.signature?.officerName}
                                         </span>
                                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                                            {entry.signature.rank}
+                                            {entry.signature?.rank}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                            {entry.signature?.forceNumber}
                                         </span>
                                         <span className="text-[9px] font-bold text-black uppercase tracking-wider mt-1 border-t border-gray-200 pt-1 inline-block">
-                                            {entry.signature.post}
+                                            {entry.signature?.post}
                                         </span>
                                     </div>
                                 </td>
