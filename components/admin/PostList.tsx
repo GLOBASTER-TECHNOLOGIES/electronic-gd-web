@@ -21,7 +21,7 @@ interface Post {
   contactNumber: string;
   address: string;
   officerInCharge?: {
-    officerName: string;
+    name: string;
     rank: string;
     forceNumber: string;
   } | null;
@@ -193,7 +193,7 @@ function PostCard({ post }: { post: Post }) {
           <p className="text-[10px] font-bold text-slate-400 uppercase">Officer In-Charge</p>
           <p className="text-xs font-bold text-slate-800">
             {post.officerInCharge 
-              ? `${post.officerInCharge.rank} ${post.officerInCharge.officerName}` 
+              ? `${post.officerInCharge.rank} ${post.officerInCharge.name}` 
               : "Vacant"}
           </p>
         </div>
