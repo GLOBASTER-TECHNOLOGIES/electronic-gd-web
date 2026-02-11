@@ -45,6 +45,11 @@ const EntrySchema = new Schema(
       officerName: String,
       rank: String,
       forceNumber: String,
+      post: {
+        type: String,
+        required: true,
+        default: "ENTRY_BEFORE_POST_ADDED", // <--- ADD THIS DEFAULT
+      },
       signedAt: {
         type: Date,
         default: Date.now,
