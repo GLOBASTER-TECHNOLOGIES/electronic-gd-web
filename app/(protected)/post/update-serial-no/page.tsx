@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { 
-  Loader2, 
-  Shield, 
-  Calendar, 
-  FileText, 
-  AlertCircle, 
-  CheckCircle, 
-  Lock 
+import {
+    Loader2,
+    Shield,
+    Calendar,
+    FileText,
+    AlertCircle,
+    CheckCircle,
+    Lock
 } from "lucide-react";
 
 export default function UpdateSerialPage() {
@@ -20,7 +20,7 @@ export default function UpdateSerialPage() {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     // Hardcoded post for Trichy Junction
-    const userPost = "TRICHY JUNCTION";
+    const userPost = "Trichy Junction";
 
     useEffect(() => {
         fetchTodayGD();
@@ -57,9 +57,9 @@ export default function UpdateSerialPage() {
             });
 
             if (res.data.success) {
-                setMessage({ 
-                    type: "success", 
-                    text: "Official Serial Number has been authenticated and locked." 
+                setMessage({
+                    type: "success",
+                    text: "Official Serial Number has been authenticated and locked."
                 });
                 setGd({ ...gd, pageSerialNo: parseInt(newSerial) });
             }
@@ -96,7 +96,7 @@ export default function UpdateSerialPage() {
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans antialiased flex flex-col items-center py-20 px-4">
             <div className="w-full max-w-xl">
-                
+
                 {/* Formal Header Section */}
                 <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4 mb-10">
                     <div>
@@ -137,21 +137,19 @@ export default function UpdateSerialPage() {
                             disabled={isLocked}
                             value={newSerial}
                             onChange={(e) => setNewSerial(e.target.value)}
-                            className={`w-full border px-4 py-4 font-mono text-xl font-bold outline-none transition-all ${
-                                isLocked 
-                                ? "bg-emerald-50 border-emerald-500 text-emerald-900 cursor-not-allowed" 
-                                : "bg-white border-slate-300 focus:border-slate-900 focus:ring-0"
-                            }`}
+                            className={`w-full border px-4 py-4 font-mono text-xl font-bold outline-none transition-all ${isLocked
+                                    ? "bg-emerald-50 border-emerald-500 text-emerald-900 cursor-not-allowed"
+                                    : "bg-white border-slate-300 focus:border-slate-900 focus:ring-0"
+                                }`}
                             placeholder="Enter 7-digit Serial"
                         />
                     </div>
 
                     {message && (
-                        <div className={`flex items-center gap-3 p-4 border text-[10px] font-black uppercase tracking-widest ${
-                            message.type === "success" 
-                            ? "bg-emerald-100 border-emerald-300 text-emerald-800" 
-                            : "bg-red-50 border-red-200 text-red-700"
-                        }`}>
+                        <div className={`flex items-center gap-3 p-4 border text-[10px] font-black uppercase tracking-widest ${message.type === "success"
+                                ? "bg-emerald-100 border-emerald-300 text-emerald-800"
+                                : "bg-red-50 border-red-200 text-red-700"
+                            }`}>
                             {message.type === "success" ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
                             {message.text}
                         </div>
@@ -160,11 +158,10 @@ export default function UpdateSerialPage() {
                     <button
                         type="submit"
                         disabled={updating || isLocked}
-                        className={`w-full py-5 text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
-                            isLocked 
-                            ? "bg-emerald-600 text-white cursor-not-allowed" 
-                            : "bg-slate-900 text-white hover:bg-black disabled:bg-slate-300"
-                        }`}
+                        className={`w-full py-5 text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${isLocked
+                                ? "bg-emerald-600 text-white cursor-not-allowed"
+                                : "bg-slate-900 text-white hover:bg-black disabled:bg-slate-300"
+                            }`}
                     >
                         {isLocked ? (
                             <>Record Locked</>
