@@ -6,6 +6,7 @@ import DashboardStats from '@/components/admin/DashboardStats';
 import OfficerList from '@/components/admin/OfficerList';
 import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 import AdminGDViewer from '@/components/admin/AdminGDViewer';
+import CreatePostForm from '@/components/admin/CreatePostForm'; // <--- 1. Import this
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -53,10 +54,17 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* 2. ADD THE NEW TAB CONDITION HERE */}
+            {/* Existing GD Viewer Tab */}
             {activeTab === 'gd-viewer' && (
               <div className="animate-in fade-in duration-500">
                 <AdminGDViewer />
+              </div>
+            )}
+
+            {/* --- 2. ADD NEW POST SECTION HERE --- */}
+            {activeTab === 'create-post' && (
+              <div className="animate-in slide-in-from-bottom-4 duration-500">
+                <CreatePostForm />
               </div>
             )}
 
