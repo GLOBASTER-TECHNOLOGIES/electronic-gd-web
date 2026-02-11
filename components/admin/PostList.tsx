@@ -39,7 +39,7 @@ export default function PostList() {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get("/api/admin/posts/all"); 
+      const res = await axios.get("/api/admin/post/get-post-data"); 
       if (res.data.success) {
         setPosts(res.data.data);
       }
