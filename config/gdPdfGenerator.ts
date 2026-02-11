@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// --- Interfaces ---
 interface Entry {
   entryNo: number;
   timeOfSubmission: string;
@@ -22,118 +23,181 @@ interface GDData {
   entries: Entry[];
 }
 
-export const generateGDPDF = (gd: GDData) => {
-  const doc = new jsPDF();
+// --- Font Loader Helper ---
+const loadLocalFont = async (doc: jsPDF) => {
+  try {
+    const response = await fetch("/fonts/NotoSansDevanagari-Regular.ttf");
 
-  // --- 1. HEADER SECTION ---
+    if (!response.ok) {
+      throw new Error(
+        "Font file missing. Check public/fonts/NotoSansDevanagari-Regular.ttf",
+      );
+    }
+
+    const blob = await response.blob();
+
+    return new Promise<void>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        const base64data = result.split(",")[1];
+
+        if (base64data) {
+          doc.addFileToVFS("NotoSans.ttf", base64data);
+          doc.addFont("NotoSans.ttf", "NotoSans", "normal");
+          doc.setFont("NotoSans", "normal");
+        }
+        resolve();
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.error("Font loading error:", err);
+    doc.setFont("helvetica");
+  }
+};
+
+// --- Main Generator Function ---
+export const generateGDPDF = async (gd: GDData) => {
+  const doc = new jsPDF("p", "pt", "a4");
+
+  const SCALE = 1.14; // 🔥 Global font scaling (10% increase)
+
+  // 1. Load Custom Font
+  await loadLocalFont(doc);
+  doc.setFont("NotoSans", "normal");
+
+  // --- 2. HEADER SECTION ---
+
+  doc.setFontSize(8 * SCALE);
+  doc.text("रे. सु. ब./फा. 2 /RPF/G. 2", 550, 30, { align: "right" });
+  doc.text("P.L.83055022", 550, 42, { align: "right" });
+
+  doc.setFontSize(10 * SCALE);
+  doc.text("भारतीय रेल / INDIAN RAILWAYS", 297, 40, { align: "center" });
+
+  doc.setFontSize(12 * SCALE);
+  doc.text("रेलवे सुरक्षा बल / RAILWAY PROTECTION FORCE", 297, 56, {
+    align: "center",
+  });
+
+  doc.setFontSize(10 * SCALE);
+  doc.text("दैनिक डायरी (रोजनामचा) / Daily Diary (Roznamacha)", 297, 72, {
+    align: "center",
+  });
+
+  doc.setFontSize(14 * SCALE);
+  doc.text("E", 340, 85);
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("INDIAN RAILWAYS", 105, 20, { align: "center" });
-  
-  doc.setFontSize(12);
-  doc.text("RAILWAY PROTECTION FORCE", 105, 26, { align: "center" });
-  
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text("Daily Diary (Roznamacha)", 105, 32, { align: "center" });
+  doc.setFontSize(16 * SCALE);
+  doc.text(gd.pageSerialNo.toString(), 550, 75, { align: "right" });
 
-  // --- 2. METADATA ROW ---
-  const startY = 45;
-  
-  doc.setFontSize(9);
-  doc.text("Division / District:", 14, startY);
-  doc.setFont("helvetica", "bold");
-  doc.text(gd.division.toUpperCase(), 45, startY);
-  doc.line(45, startY + 1, 80, startY + 1);
+  doc.setFont("NotoSans", "normal");
 
-  doc.setFont("helvetica", "normal");
-  doc.text("Date:", 90, startY);
-  doc.setFont("helvetica", "bold");
-  doc.text(new Date(gd.diaryDate).toLocaleDateString("en-GB"), 100, startY);
-  doc.line(100, startY + 1, 130, startY + 1);
+  // --- 3. METADATA ROW ---
+  const startY = 110;
 
-  doc.setFont("helvetica", "normal");
-  doc.text("Lines / Post / O.P.:", 140, startY);
-  doc.setFont("helvetica", "bold");
-  doc.text(gd.post.toUpperCase(), 170, startY);
-  doc.line(170, startY + 1, 195, startY + 1);
+  doc.setFontSize(9 * SCALE);
+  doc.text("डिभीजन/जिला", 40, startY - 12);
+  doc.text("Division/District", 40, startY);
 
-  // --- 3. THE TABLE ---
+  doc.setFontSize(11 * SCALE);
+  doc.text(gd.division.toUpperCase(), 120, startY - 2);
+  doc.line(115, startY + 2, 200, startY + 2);
+
+  const dateStr = new Date(gd.diaryDate)
+    .toLocaleDateString("en-GB")
+    .replace(/\//g, " . ");
+  doc.setFontSize(12 * SCALE);
+  doc.text(dateStr, 297, startY - 2, { align: "center" });
+
+  doc.setFontSize(9 * SCALE);
+  doc.text("लाइन/थाना/चौकी..........................", 360, startY - 12);
+  doc.text("Lines/Post/O.P..........................", 360, startY);
+
+  doc.setFontSize(10 * SCALE);
+  doc.text(gd.post.toUpperCase(), 427, startY - 2);
+
+  // --- 4. THE TABLE ---
   const tableColumn = [
-    "Date & Time", 
-    "Entry No.", // Updated from "No."
-    "Abstract",
-    "Details of Report",
-    "Signature"
+    { header: "दिनांक व समय\nDate and Time", dataKey: "dateTime" },
+    { header: "प्रविष्टि सं.\nEntry No.", dataKey: "entryNo" },
+    { header: "सार\nAbstract", dataKey: "abstract" },
+    { header: "रिपोर्ट का विवरण\nDetails of Report", dataKey: "details" },
+    { header: "हस्ताक्षर\nSignature", dataKey: "signature" },
   ];
 
-  const tableRows: any[] = [];
+  const tableRows = gd.entries.map((entry) => {
+    const dateStr = new Date(entry.timeOfSubmission).toLocaleDateString(
+      "en-GB",
+    );
+    const timeStr = new Date(entry.timeOfSubmission).toLocaleTimeString(
+      "en-IN",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      },
+    );
 
-  gd.entries.forEach((entry) => {
-    const dateStr = new Date(entry.timeOfSubmission).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    });
-
-    const timeStr = new Date(entry.timeOfSubmission).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false, 
-    });
-
-    // Removed Rank from signature block
-    const forceNo = entry.signature.forceNumber ? ` (${entry.signature.forceNumber})` : "";
+    const name = entry.signature.officerName || "";
+    const force = entry.signature.forceNumber
+      ? `${entry.signature.forceNumber}`
+      : "";
+    const rank = entry.signature.rank || "";
     const officerPost = entry.signature.post || "";
-    const signatureBlock = `${entry.signature.officerName}${forceNo}\n${officerPost}`;
 
-    const entryData = [
-      `${dateStr}\n${timeStr}`,      
-      entry.entryNo,                 
-      entry.abstract.toUpperCase(),  
-      entry.details,                 
-      signatureBlock,                
-    ];
-    tableRows.push(entryData);
+    const signatureBlock = [name, force, rank, officerPost]
+      .filter((item) => item.trim() !== "")
+      .join("\n");
+
+    return {
+      dateTime: `${dateStr}\n${timeStr}`,
+      entryNo: entry.entryNo,
+      abstract: entry.abstract.toUpperCase(),
+      details: entry.details,
+      signature: signatureBlock,
+    };
   });
 
   autoTable(doc, {
-    head: [tableColumn],
+    columns: tableColumn,
     body: tableRows,
-    startY: 55,
-    theme: "grid", 
+    startY: 125,
+    theme: "grid",
     styles: {
-      fontSize: 9,
-      cellPadding: 3,
-      lineColor: [80, 80, 80], 
-      lineWidth: 0.1,
+      font: "NotoSans",
+      fontStyle: "normal",
+      fontSize: 9 * SCALE,
+      cellPadding: 6,
+      lineColor: [80, 80, 80],
+      lineWidth: 0.5,
       textColor: [0, 0, 0],
-      font: "helvetica",
-      valign: "top", 
+      valign: "top",
     },
     headStyles: {
-      fillColor: [230, 230, 230], 
+      fillColor: [230, 230, 230],
       textColor: [0, 0, 0],
-      fontStyle: "bold",
-      lineWidth: 0.1,
+      fontStyle: "normal",
+      lineWidth: 0.5,
       lineColor: [0, 0, 0],
-      halign: "center" 
+      halign: "center",
     },
     columnStyles: {
-      0: { cellWidth: 22, halign: "center" }, 
-      1: { cellWidth: 16, halign: "center", fontStyle: "bold" }, // Entry No.
-      2: { cellWidth: 35, fontStyle: "bold" }, 
-      3: { cellWidth: "auto" }, 
-      4: { cellWidth: 35, halign: "center" }, 
+      0: { cellWidth: 70, halign: "center" },
+      1: { cellWidth: 40, halign: "center" },
+      2: { cellWidth: 80, fontStyle: "normal" },
+      3: { cellWidth: "auto" },
+      4: { cellWidth: 100, halign: "left" },
     },
   });
 
-  // --- 4. FOOTER ---
+  // --- 5. FOOTER ---
   const pageHeight = doc.internal.pageSize.height;
-  doc.setFontSize(8);
+  doc.setFontSize(8 * SCALE);
   doc.setFont("helvetica", "normal");
-  doc.text("S.R.06/01-2020/31900299/10.000 bks.x200lvs", 14, pageHeight - 10);
-  doc.text(`Page Serial No: ${gd.pageSerialNo}`, 150, pageHeight - 10);
+  doc.text("S.R.06/01-2020/31900299/10.000 bks.x200lvs", 40, pageHeight - 20);
 
   const fileName = `RPF_GD_${gd.post}_${new Date(gd.diaryDate).toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`;
   doc.save(fileName);
