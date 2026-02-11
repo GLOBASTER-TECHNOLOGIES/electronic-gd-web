@@ -37,7 +37,7 @@ export default function CreatePostForm() {
     setMessage(null);
 
     try {
-      const res = await axios.post("/api/admin/posts/add", formData);
+      const res = await axios.post("/api/admin/post/create-post", formData);
 
       if (res.data.success) {
         setMessage({ type: "success", text: `Post "${res.data.data.postName}" created successfully!` });
