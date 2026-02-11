@@ -25,12 +25,7 @@ interface GDData {
 export const generateGDPDF = (gd: GDData) => {
   const doc = new jsPDF();
 
-  // --- 1. HEADER SECTION (Mimicking the Paper Form) ---
-  
-  // Top Right Code
-  doc.setFontSize(8);
-  doc.text("R.S.B./F. 2/RPF/G. 2", 150, 10);
-  doc.text("P.L.83055022", 160, 14);
+  // --- 1. HEADER SECTION ---
 
   // Main Titles (Center)
   doc.setFont("helvetica", "bold");
@@ -44,7 +39,7 @@ export const generateGDPDF = (gd: GDData) => {
   doc.setFont("helvetica", "normal");
   doc.text("Daily Diary (Roznamacha)", 105, 32, { align: "center" });
 
-  // --- 2. METADATA ROW (Division | Date | Post) ---
+  // --- 2. METADATA ROW ---
   const startY = 45;
   
   // Division (Left)
@@ -68,10 +63,10 @@ export const generateGDPDF = (gd: GDData) => {
   doc.text(gd.post.toUpperCase(), 170, startY);
   doc.line(170, startY + 1, 195, startY + 1); // Underline
 
-  // --- 3. THE TABLE (Ruled Style) ---
+  // --- 3. THE TABLE ---
   const tableColumn = [
-    "Date and Time",
-    "Entry No.",
+    "Date & Time", 
+    "No.",         
     "Abstract",
     "Details of Report",
     "Signature"
@@ -80,23 +75,35 @@ export const generateGDPDF = (gd: GDData) => {
   const tableRows: any[] = [];
 
   gd.entries.forEach((entry) => {
-    const time = new Date(entry.timeOfSubmission).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false, // 24-hour format looks more official usually
-    });
-
-    const date = new Date(entry.timeOfSubmission).toLocaleDateString("en-GB", {
+    // Format: 11/02/2026
+    const dateStr = new Date(entry.timeOfSubmission).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
+      year: "numeric"
     });
 
+    // Format: 09:30
+    const timeStr = new Date(entry.timeOfSubmission).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false, 
+    });
+
+    // ✅ SAFE SIGNATURE BLOCK
+    // Using || " " ensures it doesn't crash if data is missing
+    const rank = entry.signature.rank || "";
+    const forceNo = entry.signature.forceNumber ? ` (${entry.signature.forceNumber})` : "";
+    const officerPost = entry.signature.post || "";
+
+    // Combines: "Name \n Rank (ForceNo) \n Post"
+    const signatureBlock = `${entry.signature.officerName}\n${rank}${forceNo}\n${officerPost}`;
+
     const entryData = [
-      `${date}\n${time}`,           // Col 1
-      entry.entryNo,                 // Col 2
-      entry.abstract.toUpperCase(),  // Col 3
-      entry.details,                 // Col 4
-      `${entry.signature.officerName}\n${entry.signature.rank}`, // Col 5
+      `${dateStr}\n${timeStr}`,      
+      entry.entryNo,                 
+      entry.abstract.toUpperCase(),  
+      entry.details,                 
+      signatureBlock,                
     ];
     tableRows.push(entryData);
   });
@@ -105,33 +112,34 @@ export const generateGDPDF = (gd: GDData) => {
     head: [tableColumn],
     body: tableRows,
     startY: 55,
-    theme: "grid", // Gives that "Ruled Paper" look
+    theme: "grid", 
     styles: {
       fontSize: 9,
       cellPadding: 3,
-      lineColor: [40, 40, 40], // Dark Grey Lines
+      lineColor: [80, 80, 80], 
       lineWidth: 0.1,
       textColor: [0, 0, 0],
       font: "helvetica",
-      valign: "top", // Text aligns to top like a register
+      valign: "top", 
     },
     headStyles: {
-      fillColor: [220, 220, 220], // Light Grey Header
+      fillColor: [230, 230, 230], 
       textColor: [0, 0, 0],
       fontStyle: "bold",
       lineWidth: 0.1,
       lineColor: [0, 0, 0],
+      halign: "center" 
     },
     columnStyles: {
-      0: { cellWidth: 25 }, // Date & Time
-      1: { cellWidth: 15, halign: "center" }, // Entry No
-      2: { cellWidth: 35, fontStyle: "bold" }, // Abstract
-      3: { cellWidth: "auto" }, // Details (Takes remaining space)
-      4: { cellWidth: 30 }, // Signature
+      0: { cellWidth: 22, halign: "center" }, 
+      1: { cellWidth: 12, halign: "center", fontStyle: "bold" }, 
+      2: { cellWidth: 35, fontStyle: "bold" }, 
+      3: { cellWidth: "auto" }, 
+      4: { cellWidth: 35, halign: "center" }, // Signature
     },
   });
 
-  // --- 4. FOOTER (S.R. Code from image) ---
+  // --- 4. FOOTER ---
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
