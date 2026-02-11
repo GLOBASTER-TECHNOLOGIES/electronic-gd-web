@@ -7,6 +7,7 @@ import OfficerList from '@/components/admin/OfficerList';
 import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 import AdminGDViewer from '@/components/admin/AdminGDViewer';
 import CreatePostForm from '@/components/admin/CreatePostForm'; // <--- 1. Import this
+import PostList from '@/components/admin/PostList';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -65,6 +66,12 @@ export default function AdminDashboard() {
             {activeTab === 'create-post' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <CreatePostForm />
+              </div>
+            )}
+
+            {activeTab === 'posts' && (
+              <div className="animate-in fade-in duration-500">
+                <PostList />
               </div>
             )}
 
