@@ -14,22 +14,11 @@ import {
   Clock,
   Hash,
   BookOpen,
-  ArrowRight
+  ArrowRight,
+  UserPlus // Icon for Visiting Officer
 } from "lucide-react";
 
-interface Post {
-  _id: string;
-  postName: string;
-  postCode: string;
-  division: string;
-  contactNumber: string;
-  address: string;
-  officerInCharge?: {
-    name: string;
-    rank: string;
-    forceNumber: string;
-  } | null;
-}
+// ... Interfaces remain the same ...
 
 export default function PostsDashboard() {
   const router = useRouter();
@@ -48,8 +37,8 @@ export default function PostsDashboard() {
       const meRes = await axios.get("/api/auth/me");
       if (!meRes.data.success || !meRes.data.user) throw new Error("Verification failed.");
       const myId = meRes.data.user._id;
-      const postRes = await axios.get("/api/post/get-post-data", { 
-        params: { officerInCharge: myId } 
+      const postRes = await axios.get("/api/post/get-post-data", {
+        params: { officerInCharge: myId }
       });
       if (postRes.data.success) setPosts(postRes.data.data);
     } catch (err: any) {
@@ -67,8 +56,8 @@ export default function PostsDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
+      <div className="max-w-6xl mx-auto space-y-6">
+
         {/* OFFICIAL HEADER */}
         <div className="bg-white border-b-2 border-slate-900 p-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -96,14 +85,14 @@ export default function PostsDashboard() {
         ) : (
           posts.map((post) => (
             <div key={post._id} className="space-y-6">
-              
+
               {/* MAIN RECORD CARD */}
               <div className="bg-white border border-gray-300 shadow-sm overflow-hidden">
                 <div className="bg-slate-900 text-white px-6 py-2 text-[10px] font-bold uppercase tracking-widest flex justify-between">
                   <span>Post Assignment Details</span>
                   <span>Unit Code: {post.postCode}</span>
                 </div>
-                
+
                 <div className="p-6 md:p-10">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Column 1: Station Info */}
@@ -113,15 +102,15 @@ export default function PostsDashboard() {
                         <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tight">{post.postName}</h2>
                         <p className="text-sm font-bold text-blue-700 mt-1 uppercase tracking-wide">{post.division} Division | Southern Railway</p>
                       </div>
-                      
+
                       <div className="flex gap-10 border-t border-gray-100 pt-6">
                         <div>
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Contact Number</label>
-                          <p className="text-lg font-bold text-slate-800 flex items-center gap-2"><Phone size={16}/> {post.contactNumber || "N/A"}</p>
+                          <p className="text-lg font-bold text-slate-800 flex items-center gap-2"><Phone size={16} /> {post.contactNumber || "N/A"}</p>
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Jurisdiction Address</label>
-                          <p className="text-sm font-medium text-slate-600 flex items-start gap-2 max-w-xs"><MapPin size={16} className="mt-1 shrink-0"/> {post.address}</p>
+                          <p className="text-sm font-medium text-slate-600 flex items-start gap-2 max-w-xs"><MapPin size={16} className="mt-1 shrink-0" /> {post.address}</p>
                         </div>
                       </div>
                     </div>
@@ -139,9 +128,10 @@ export default function PostsDashboard() {
                 </div>
               </div>
 
-              {/* ACTION ROW - SIMPLE TILES */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button 
+              {/* ACTION ROW - THREE TILES */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. VIEW GD */}
+                <button
                   onClick={() => router.push(`/post/view-gd?postCode=${post.postCode}`)}
                   className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
                 >
@@ -150,14 +140,32 @@ export default function PostsDashboard() {
                       <BookOpen size={20} />
                     </div>
                     <div className="text-left">
-                      <h4 className="text-sm font-bold uppercase text-slate-900">General Diary (GD)</h4>
-                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">View and download daily register entries</p>
+                      <h4 className="text-sm font-bold uppercase text-slate-900">General Diary</h4>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider text-wrap">View / Download Records</p>
                     </div>
                   </div>
                   <ArrowRight size={18} className="text-gray-300 group-hover:text-slate-900 transition-colors" />
                 </button>
 
-                <button 
+                {/* 2. ADD ENTRY (VISITING OFFICER) - NEW ACTION */}
+                <button
+                  onClick={() => router.push("/post/visiting-officer-login")}
+                  className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-emerald-100 p-3 rounded text-emerald-700">
+                      <UserPlus size={20} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-sm font-bold uppercase text-slate-900 leading-tight">Add GD Entry</h4>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">(Visiting Officer)</p>
+                    </div>
+                  </div>
+                  <ArrowRight size={18} className="text-gray-300 group-hover:text-slate-900 transition-colors" />
+                </button>
+
+                {/* 3. PAGE SERIAL NO */}
+                <button
                   onClick={() => router.push(`/post/update-serial-no?id=${post._id}`)}
                   className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
                 >
@@ -166,8 +174,8 @@ export default function PostsDashboard() {
                       <Hash size={20} />
                     </div>
                     <div className="text-left">
-                      <h4 className="text-sm font-bold uppercase text-slate-900">Page Serial Number</h4>
-                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">Update and authenticate register serials</p>
+                      <h4 className="text-sm font-bold uppercase text-slate-900">Serial Number</h4>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider text-wrap">Authenticate Register</p>
                     </div>
                   </div>
                   <ArrowRight size={18} className="text-gray-300 group-hover:text-slate-900 transition-colors" />
