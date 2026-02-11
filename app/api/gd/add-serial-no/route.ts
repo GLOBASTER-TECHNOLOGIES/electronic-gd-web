@@ -11,60 +11,52 @@ export async function PATCH(request: NextRequest) {
 
     if (!post || pageSerialNo === undefined) {
       return NextResponse.json(
-        { success: false, message: "Missing Post name or Serial Number" },
+        { success: false, message: "Missing required fields." },
         { status: 400 }
       );
     }
 
-    // 1. Calculate Today's Date normalized to 00:00:00 UTC
-    // This ensures we ONLY find the register created for the current day
+    // 1. Target Today's Date
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    // 2. Find and Update only if Post and Date match
-    // This naturally prevents updating previous days because the Date wouldn't match
-    const updatedGD = await GeneralDiary.findOneAndUpdate(
-      { 
-        post: post, 
-        diaryDate: today 
-      },
-      { $set: { pageSerialNo: pageSerialNo } },
-      { 
-        new: true, 
-        runValidators: true 
-      }
-    );
+    // 2. First, check if a serial number already exists
+    const existingGD = await GeneralDiary.findOne({ post, diaryDate: today });
 
-    if (!updatedGD) {
+    if (!existingGD) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: "No active GD found for today. Previous records cannot be updated." 
-        },
+        { success: false, message: "Today's register has not been initiated." },
         { status: 404 }
       );
     }
 
+    // 3. One-Time Update Enforcement
+    // Check if pageSerialNo is already set (assuming 0 is the default/empty state)
+    if (existingGD.pageSerialNo !== 0 && existingGD.pageSerialNo !== undefined) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: "The Serial Number has already been authenticated. Further updates are prohibited." 
+        },
+        { status: 403 }
+      );
+    }
+
+    // 4. Perform the single-time update
+    existingGD.pageSerialNo = pageSerialNo;
+    await existingGD.save();
+
     return NextResponse.json(
       { 
         success: true, 
-        message: "Today's Serial Number updated successfully", 
-        data: { pageSerialNo: updatedGD.pageSerialNo } 
+        message: "Official Serial Number locked successfully.", 
+        data: { pageSerialNo: existingGD.pageSerialNo } 
       },
       { status: 200 }
     );
 
   } catch (error: any) {
-    console.error("Update Serial Error:", error);
-
-    // Handle MongoDB unique index error if serial number is already taken
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { success: false, message: "This Serial Number is already in use by another register." },
-        { status: 409 }
-      );
-    }
-
+    console.error("Lock Serial Error:", error);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }
