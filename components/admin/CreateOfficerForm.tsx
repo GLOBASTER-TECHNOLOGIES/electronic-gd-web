@@ -45,7 +45,7 @@ export default function CreateOfficerForm() {
       const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
 
       // 3. Real API Request
-      const request = fetch('/api/admin/officer/create-officer', {
+      const request = fetch('/api/officer/create-officer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
