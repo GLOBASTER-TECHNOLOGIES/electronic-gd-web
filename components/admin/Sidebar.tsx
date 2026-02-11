@@ -7,7 +7,8 @@ import {
   LogOut, 
   ShieldCheck, 
   X, 
-  BookOpen // <--- Imported for the GD Viewer Icon
+  BookOpen,
+  Building2 // <--- 1. Import new icon for Stations/Posts
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -28,7 +29,9 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: 
     { id: 'officers', label: 'Officer Records', icon: <Users size={18} /> },
     { id: 'create-officer', label: 'Create Officer', icon: <UserPlus size={18} /> },
     
-    // ✅ NEW MENU ITEM
+    // ✅ NEW MENU ITEM: Create Post
+    { id: 'create-post', label: 'Create Post', icon: <Building2 size={18} /> },
+
     { id: 'gd-viewer', label: 'GD Viewer', icon: <BookOpen size={18} /> },
   ];
 
