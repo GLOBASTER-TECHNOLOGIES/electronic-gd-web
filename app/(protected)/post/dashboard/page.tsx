@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { 
-  Building2, 
-  MapPin, 
-  Search, 
-  Plus, 
-  Filter, 
-  Phone, 
-  MoreVertical, 
+import {
+  Building2,
+  MapPin,
+  Search,
+  Plus,
+  Filter,
+  Phone,
+  MoreVertical,
   Loader2,
   TrainFront,
   UserSquare2
@@ -45,7 +45,7 @@ export default function PostsDashboard() {
   const fetchPosts = async () => {
     try {
       // Assuming you will create this GET route
-      const res = await axios.get("/api/admin/posts/all"); 
+      const res = await axios.get("/api/post/get-post-data");
       if (res.data.success) {
         setPosts(res.data.data);
       }
@@ -58,19 +58,19 @@ export default function PostsDashboard() {
 
   // --- Filtering Logic ---
   const divisions = ["ALL", ...Array.from(new Set(posts.map(p => p.division)))];
-  
+
   const filteredPosts = posts.filter(post => {
-    const matchesSearch = 
-      post.postName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      post.postName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.postCode.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDivision = selectedDivision === "ALL" || post.division === selectedDivision;
-    
+
     return matchesSearch && matchesDivision;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10 space-y-8 font-sans text-slate-900">
-      
+
       {/* 1. HEADER & ACTIONS */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -80,9 +80,9 @@ export default function PostsDashboard() {
           </h1>
           <p className="text-slate-500 mt-1">Manage RPF Thanas, Outposts, and Jurisdictions.</p>
         </div>
-        
+
         {/* Quick Action Button - Links to your 'Create' tab or page */}
-        <Link href="/admin/create-post"> 
+        <Link href="/admin/create-post">
           <button className="bg-slate-900 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm flex items-center gap-2 transition-all shadow-lg shadow-slate-200">
             <Plus size={18} /> Add New Post
           </button>
@@ -91,20 +91,20 @@ export default function PostsDashboard() {
 
       {/* 2. STATS OVERVIEW */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard 
-          label="Total Posts" 
-          value={posts.length} 
-          icon={<TrainFront size={24} className="text-blue-500" />} 
+        <StatCard
+          label="Total Posts"
+          value={posts.length}
+          icon={<TrainFront size={24} className="text-blue-500" />}
         />
-        <StatCard 
-          label="Active Divisions" 
+        <StatCard
+          label="Active Divisions"
           value={divisions.length - 1} // Minus 'ALL'
-          icon={<MapPin size={24} className="text-emerald-500" />} 
+          icon={<MapPin size={24} className="text-emerald-500" />}
         />
-        <StatCard 
-          label="Officers Assigned" 
-          value={posts.filter(p => p.officerInCharge).length} 
-          icon={<UserSquare2 size={24} className="text-purple-500" />} 
+        <StatCard
+          label="Officers Assigned"
+          value={posts.filter(p => p.officerInCharge).length}
+          icon={<UserSquare2 size={24} className="text-purple-500" />}
         />
       </div>
 
@@ -112,7 +112,7 @@ export default function PostsDashboard() {
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input 
+          <input
             type="text"
             placeholder="Search by Post Name or Code..."
             value={searchTerm}
@@ -120,10 +120,10 @@ export default function PostsDashboard() {
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
           />
         </div>
-        
+
         <div className="flex items-center gap-2 w-full md:w-auto">
           <Filter size={20} className="text-slate-400" />
-          <select 
+          <select
             value={selectedDivision}
             onChange={(e) => setSelectedDivision(e.target.value)}
             className="w-full md:w-48 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-700"
@@ -229,12 +229,12 @@ function PostCard({ post }: { post: Post }) {
         <div>
           <p className="text-[10px] font-bold text-slate-400 uppercase">Officer In-Charge</p>
           <p className="text-xs font-bold text-slate-800">
-            {post.officerInCharge 
-              ? `${post.officerInCharge.rank} ${post.officerInCharge.officerName}` 
+            {post.officerInCharge
+              ? `${post.officerInCharge.rank} ${post.officerInCharge.officerName}`
               : "Vacant / Not Assigned"}
           </p>
         </div>
       </div>
     </div>
   );
-  }
+}
