@@ -12,28 +12,34 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const division = searchParams.get("division") || "ALL";
+    const officerId = searchParams.get("officerInCharge"); // <--- Extract Officer ID
 
     // 2. Build the MongoDB Query Object
     const query: any = {};
 
-    // Filter by Division (if not ALL)
+    // Filter by Division
     if (division !== "ALL") {
       query.division = division;
     }
 
-    // Filter by Search Term (Post Name OR Post Code)
+    // 👇 Filter by Officer ID (This makes "My Post" work)
+    if (officerId) {
+      query.officerInCharge = officerId;
+    }
+
+    // Filter by Search Term
     if (search) {
       query.$or = [
-        { postName: { $regex: search, $options: "i" } }, // Case-insensitive
+        { postName: { $regex: search, $options: "i" } },
         { postCode: { $regex: search, $options: "i" } },
       ];
     }
 
     // 3. Fetch from DB
     const posts = await Post.find(query)
-      .populate("officerInCharge", "name rank forceNumber")
+      .populate("officerInCharge", "name rank forceNumber") // Populates using the "Officer" model
       .sort({ division: 1, postName: 1 });
-    console.log(posts);
+
     return NextResponse.json({ success: true, data: posts }, { status: 200 });
   } catch (error) {
     console.error("Filter Posts Error:", error);
