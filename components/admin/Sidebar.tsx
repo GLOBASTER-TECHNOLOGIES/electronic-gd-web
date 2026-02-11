@@ -1,6 +1,14 @@
 "use client";
 import React from 'react';
-import { Users, UserPlus, LayoutDashboard, LogOut, ShieldCheck, X } from 'lucide-react';
+import { 
+  Users, 
+  UserPlus, 
+  LayoutDashboard, 
+  LogOut, 
+  ShieldCheck, 
+  X, 
+  BookOpen // <--- Imported for the GD Viewer Icon
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -19,6 +27,9 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: 
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { id: 'officers', label: 'Officer Records', icon: <Users size={18} /> },
     { id: 'create-officer', label: 'Create Officer', icon: <UserPlus size={18} /> },
+    
+    // ✅ NEW MENU ITEM
+    { id: 'gd-viewer', label: 'GD Viewer', icon: <BookOpen size={18} /> },
   ];
 
   const handleNavClick = (tab: string) => {
@@ -26,24 +37,17 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: 
     setIsOpen(false);
   };
 
-  // --- NEW LOGOUT LOGIC ---
   const handleLogout = async () => {
     const toastId = toast.loading("Signing out...");
 
     try {
-      // 1. Call the logout API to clear the cookie
       await axios.get('/api/auth/logout');
-      
       toast.success("Signed out successfully", { id: toastId });
-      
-      // 2. Redirect to Login
       router.push('/login');
-      router.refresh(); // Ensure all server components refresh
-      
+      router.refresh(); 
     } catch (error) {
       console.error("Logout failed", error);
       toast.error("Logout failed. Please try again.", { id: toastId });
-      // Force redirect anyway for safety
       router.push('/login');
     }
   };
@@ -92,7 +96,7 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: 
 
         <div className="p-4 border-t border-gray-700/50">
           <button 
-            onClick={handleLogout} // Attached handler here
+            onClick={handleLogout} 
             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
           >
             <LogOut size={18} />
