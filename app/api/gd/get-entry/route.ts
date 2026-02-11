@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import GeneralDiary from "@/models/gd.model";
+import mongoose from "mongoose";
 
-export const dynamic = 'force-dynamic'; // Prevent Vercel from caching this route
+export const dynamic = 'force-dynamic';
 
-/* =========================
-   Helper: Normalize Date
-   (Matches the Logic used in Creation)
-========================= */
 function normalizeDiaryDate(dateInput: Date | string) {
   const date = new Date(dateInput);
-  
-  // 1. Convert to Milliseconds
   const now = date.getTime();
-  
-  // 2. Add IST Offset (+5.5h) to find "Local Day"
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istTime = new Date(now + istOffset);
-  
-  // 3. Set to Midnight
   istTime.setUTCHours(0, 0, 0, 0);
-  
-  // 4. Subtract Offset back to get the UTC stored value
   return new Date(istTime.getTime() - istOffset);
 }
 
@@ -29,50 +18,67 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect();
 
-    // 1. Extract Parameters
     const { searchParams } = new URL(request.url);
     const post = searchParams.get("post");
-    const dateParam = searchParams.get("date"); // Optional (YYYY-MM-DD)
+    const dateParam = searchParams.get("date");
+    const id = searchParams.get("id"); // New Param for specific fetching
 
-    // 2. Validation
-    if (!post) {
+    // ==========================================
+    // CASE 1: FETCH BY ID (Full Details)
+    // Used when clicking "Show More"
+    // ==========================================
+    if (id) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json({ success: false, message: "Invalid ID" }, { status: 400 });
+      }
+      const gd = await GeneralDiary.findById(id).lean();
+      return NextResponse.json({ success: true, data: gd }, { status: 200 });
+    }
+
+    // ==========================================
+    // CASE 2: SPECIFIC FILTER (Post + Date)
+    // Used by Officer View
+    // ==========================================
+    if (post) {
+      const targetDate = dateParam ? new Date(dateParam) : new Date();
+      const queryDate = normalizeDiaryDate(targetDate);
+
+      const gd = await GeneralDiary.findOne({
+        post: post,
+        diaryDate: queryDate
+      }).lean();
+
       return NextResponse.json(
-        { success: false, message: "Post name is required" },
-        { status: 400 }
+        { success: true, data: gd || null }, 
+        { status: 200 }
       );
     }
 
-    // 3. Determine the Date to Query
-    // If frontend sends a date, use it. Otherwise, default to NOW.
-    const targetDate = dateParam ? new Date(dateParam) : new Date();
-    
-    // Normalize it to match the DB format (Midnight IST)
-    const queryDate = normalizeDiaryDate(targetDate);
+    // ==========================================
+    // CASE 3: ADMIN OVERVIEW (Summary Only)
+    // Returns metadata + count. NO text details.
+    // ==========================================
+    const summaries = await GeneralDiary.aggregate([
+      {
+        $sort: { diaryDate: -1, updatedAt: -1 } 
+      },
+      {
+        $project: {
+          _id: 1,
+          division: 1,
+          post: 1,
+          diaryDate: 1,
+          pageSerialNo: 1,
+          status: 1,
+          updatedAt: 1,
+          // Efficiently count the array without loading it
+          entryCount: { $size: "$entries" } 
+        }
+      }
+    ]);
 
-    // 4. Find the Document
-    const gd = await GeneralDiary.findOne({
-      post: post,
-      diaryDate: queryDate
-    }).lean(); // .lean() makes it a plain JS object (faster)
-
-    // 5. Handle Not Found
-    if (!gd) {
-      return NextResponse.json(
-        { 
-          success: true, // Request succeeded, just no data found
-          data: null, 
-          message: "No General Diary opened for this date." 
-        },
-        { status: 200 } // Return 200 so frontend can handle "Empty State" gracefully
-      );
-    }
-
-    // 6. Return Data
     return NextResponse.json(
-      { 
-        success: true, 
-        data: gd 
-      }, 
+      { success: true, data: summaries },
       { status: 200 }
     );
 
