@@ -5,6 +5,7 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardStats from '@/components/admin/DashboardStats';
 import OfficerList from '@/components/admin/OfficerList';
 import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
+import AdminGDViewer from '@/components/admin/AdminGDViewer';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -13,7 +14,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
 
-      {/* 1. SIDEBAR (Navigation) */}
+      {/* SIDEBAR */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -21,17 +22,16 @@ export default function AdminDashboard() {
         setIsOpen={setIsSidebarOpen}
       />
 
-      {/* 2. MAIN LAYOUT WRAPPER */}
-      {/* This margin (lg:ml-64) pushes content right on desktop so sidebar doesn't overlap */}
+      {/* MAIN LAYOUT */}
       <div className="flex-1 flex flex-col transition-all duration-300 lg:ml-64 min-w-0">
 
-        {/* 3. HEADER */}
+        {/* HEADER */}
         <AdminHeader
           activeTab={activeTab}
           onMenuClick={() => setIsSidebarOpen(true)}
         />
 
-        {/* 4. CONTENT AREA */}
+        {/* CONTENT AREA */}
         <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
 
@@ -50,6 +50,13 @@ export default function AdminDashboard() {
             {activeTab === 'officers' && (
               <div className="animate-in fade-in duration-500">
                 <OfficerList />
+              </div>
+            )}
+
+            {/* 2. ADD THE NEW TAB CONDITION HERE */}
+            {activeTab === 'gd-viewer' && (
+              <div className="animate-in fade-in duration-500">
+                <AdminGDViewer />
               </div>
             )}
 
