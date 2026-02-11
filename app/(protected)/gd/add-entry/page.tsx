@@ -20,7 +20,7 @@ export default function AddGDEntryPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(true);
   
-  // 1. Live Time State
+  // 1. Live Time State (Only for Display)
   const [time, setTime] = useState(new Date());
 
   const [formData, setFormData] = useState({
@@ -61,7 +61,8 @@ export default function AddGDEntryPage() {
   // Focus the invisible input when modal opens
   useEffect(() => {
     if (isAckModalOpen && inputRef.current) {
-        inputRef.current.focus();
+        // Small timeout to ensure modal is rendered
+        setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isAckModalOpen]);
 
@@ -84,29 +85,51 @@ export default function AddGDEntryPage() {
 
     setLoading(true);
 
-    try {
-      await axios.post("/api/gd/create-entry", {
-        ...formData,
-        division: user.division,
-        post: user.postName,
-        officerId: user._id,
-        officerName: user.name,
-        rank: user.rank,
-        forceNumber: user.forceNumber,
-        acknowledged: true,
-        timeOfSubmission: time, // Sending the submission time
-      });
+    // Capture the EXACT moment of submission (Decoupled from display time)
+    const exactClickTime = new Date();
 
-      setFormData({ abstract: "", details: "" });
-      setAckInput("");
-      setIsAckModalOpen(false);
-      router.refresh();
-      alert("Entry Verified & Recorded. Reference Number Generated.");
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed");
-    } finally {
-      setLoading(false);
-    }
+    const payload = {
+       ...formData,
+       division: user.division,
+       post: user.postName,
+       officerId: user._id,
+       officerName: user.name,
+       rank: user.rank,
+       forceNumber: user.forceNumber,
+       acknowledged: true,
+       timeOfSubmission: exactClickTime, // <-- Using precise time
+    };
+
+    // --- RETRY LOGIC (Recursive) ---
+    const submitWithRetry = async (attempts = 0) => {
+      try {
+        // Updated Endpoint
+        await axios.post("/api/gd/add-entry", payload);
+  
+        // Success!
+        setFormData({ abstract: "", details: "" });
+        setAckInput("");
+        setIsAckModalOpen(false);
+        router.refresh();
+        alert("Entry Verified & Recorded. Reference Number Generated.");
+        setLoading(false);
+
+      } catch (err: any) {
+        // If Conflict (409) & under 3 attempts, Retry automatically
+        if (err.response?.status === 409 && attempts < 3) {
+           console.log(`Concurrency conflict detected. Retrying (Attempt ${attempts + 1})...`);
+           setTimeout(() => submitWithRetry(attempts + 1), 500); // Wait 500ms and retry
+           return; 
+        }
+
+        // Real failure
+        alert(err?.response?.data?.message || "Failed to record entry");
+        setLoading(false);
+      }
+    };
+
+    // Start the submission process
+    submitWithRetry();
   };
 
   if (fetchingUser) return null;
@@ -147,7 +170,7 @@ export default function AddGDEntryPage() {
                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date</span>
                     <span className="block font-mono">{time.toLocaleDateString('en-GB')}</span>
                 </div>
-                {/* 4. Displaying Time */}
+                {/* Displaying Time */}
                 <div>
                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time</span>
                     <span className="block font-mono text-red-700 font-bold">
@@ -260,14 +283,14 @@ export default function AddGDEntryPage() {
                       {/* --- MONKEYTYPE CONTAINER --- */}
                       <div 
                         className="relative w-full p-6 border-2 border-gray-200 bg-gray-50 cursor-text min-h-[120px] flex flex-wrap content-start text-left"
-                        onClick={() => inputRef.current?.focus()} // Clicking anywhere focuses input
+                        onClick={() => inputRef.current?.focus()}
                       >
                         
                         {/* 1. VISUAL RENDERER (Spans) */}
                         <div className="font-mono text-lg font-bold uppercase tracking-wide leading-relaxed break-words w-full select-none">
                             {REQUIRED_ACK_TEXT.split('').map((char, index) => {
                                 const userChar = ackInput[index];
-                                let colorClass = "text-gray-300"; // Default (Untyped)
+                                let colorClass = "text-gray-300"; // Untyped
                                 let cursorClass = "";
 
                                 if (index < ackInput.length) {
@@ -278,7 +301,7 @@ export default function AddGDEntryPage() {
                                     }
                                 }
 
-                                // Cursor Effect (Blinking Block on current char)
+                                // Blinking Cursor Effect
                                 if (index === ackInput.length) {
                                     cursorClass = "border-l-2 border-black animate-pulse";
                                 }
