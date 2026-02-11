@@ -26,8 +26,6 @@ export const generateGDPDF = (gd: GDData) => {
   const doc = new jsPDF();
 
   // --- 1. HEADER SECTION ---
-
-  // Main Titles (Center)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text("INDIAN RAILWAYS", 105, 20, { align: "center" });
@@ -42,31 +40,28 @@ export const generateGDPDF = (gd: GDData) => {
   // --- 2. METADATA ROW ---
   const startY = 45;
   
-  // Division (Left)
   doc.setFontSize(9);
   doc.text("Division / District:", 14, startY);
   doc.setFont("helvetica", "bold");
   doc.text(gd.division.toUpperCase(), 45, startY);
-  doc.line(45, startY + 1, 80, startY + 1); // Underline
+  doc.line(45, startY + 1, 80, startY + 1);
 
-  // Date (Center)
   doc.setFont("helvetica", "normal");
   doc.text("Date:", 90, startY);
   doc.setFont("helvetica", "bold");
   doc.text(new Date(gd.diaryDate).toLocaleDateString("en-GB"), 100, startY);
-  doc.line(100, startY + 1, 130, startY + 1); // Underline
+  doc.line(100, startY + 1, 130, startY + 1);
 
-  // Post (Right)
   doc.setFont("helvetica", "normal");
   doc.text("Lines / Post / O.P.:", 140, startY);
   doc.setFont("helvetica", "bold");
   doc.text(gd.post.toUpperCase(), 170, startY);
-  doc.line(170, startY + 1, 195, startY + 1); // Underline
+  doc.line(170, startY + 1, 195, startY + 1);
 
   // --- 3. THE TABLE ---
   const tableColumn = [
     "Date & Time", 
-    "No.",         
+    "Entry No.", // Updated from "No."
     "Abstract",
     "Details of Report",
     "Signature"
@@ -75,28 +70,22 @@ export const generateGDPDF = (gd: GDData) => {
   const tableRows: any[] = [];
 
   gd.entries.forEach((entry) => {
-    // Format: 11/02/2026
     const dateStr = new Date(entry.timeOfSubmission).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric"
     });
 
-    // Format: 09:30
     const timeStr = new Date(entry.timeOfSubmission).toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false, 
     });
 
-    // ✅ SAFE SIGNATURE BLOCK
-    // Using || " " ensures it doesn't crash if data is missing
-    const rank = entry.signature.rank || "";
+    // Removed Rank from signature block
     const forceNo = entry.signature.forceNumber ? ` (${entry.signature.forceNumber})` : "";
     const officerPost = entry.signature.post || "";
-
-    // Combines: "Name \n Rank (ForceNo) \n Post"
-    const signatureBlock = `${entry.signature.officerName}\n${rank}${forceNo}\n${officerPost}`;
+    const signatureBlock = `${entry.signature.officerName}${forceNo}\n${officerPost}`;
 
     const entryData = [
       `${dateStr}\n${timeStr}`,      
@@ -132,10 +121,10 @@ export const generateGDPDF = (gd: GDData) => {
     },
     columnStyles: {
       0: { cellWidth: 22, halign: "center" }, 
-      1: { cellWidth: 12, halign: "center", fontStyle: "bold" }, 
+      1: { cellWidth: 16, halign: "center", fontStyle: "bold" }, // Entry No.
       2: { cellWidth: 35, fontStyle: "bold" }, 
       3: { cellWidth: "auto" }, 
-      4: { cellWidth: 35, halign: "center" }, // Signature
+      4: { cellWidth: 35, halign: "center" }, 
     },
   });
 
@@ -144,11 +133,8 @@ export const generateGDPDF = (gd: GDData) => {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text("S.R.06/01-2020/31900299/10.000 bks.x200lvs", 14, pageHeight - 10);
-  
-  // Page Serial
   doc.text(`Page Serial No: ${gd.pageSerialNo}`, 150, pageHeight - 10);
 
-  // Save
   const fileName = `RPF_GD_${gd.post}_${new Date(gd.diaryDate).toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`;
   doc.save(fileName);
 };
