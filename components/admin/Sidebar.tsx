@@ -8,7 +8,8 @@ import {
   ShieldCheck, 
   X, 
   BookOpen,
-  Building2 // <--- 1. Import new icon for Stations/Posts
+  Building2,
+  TrainFront // <--- 1. Import Icon for View Posts
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -26,10 +27,13 @@ export default function Sidebar({ activeTab, setActiveTab, isOpen, setIsOpen }: 
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    
+    // Officer Management
     { id: 'officers', label: 'Officer Records', icon: <Users size={18} /> },
     { id: 'create-officer', label: 'Create Officer', icon: <UserPlus size={18} /> },
     
-    // ✅ NEW MENU ITEM: Create Post
+    // Post Management (Grouped together)
+    { id: 'posts', label: 'View Posts', icon: <TrainFront size={18} /> }, // <--- 2. Add View Posts
     { id: 'create-post', label: 'Create Post', icon: <Building2 size={18} /> },
 
     { id: 'gd-viewer', label: 'GD Viewer', icon: <BookOpen size={18} /> },
