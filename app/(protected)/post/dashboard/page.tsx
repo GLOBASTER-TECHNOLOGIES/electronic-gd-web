@@ -16,6 +16,7 @@ import {
   BookOpen,
   ArrowRight,
   UserPlus,
+  AlertCircle,
   LogOut // New icon for logout
 } from "lucide-react";
 
@@ -82,16 +83,16 @@ export default function PostsDashboard() {
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Railway Protection Force • Official Use Only</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4 md:gap-8 justify-between md:justify-end">
               <div className="hidden sm:block text-right">
                 <p className="text-[10px] font-bold text-gray-400 uppercase">System Date</p>
                 <p className="text-sm font-bold text-slate-900">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
               </div>
-              
+
               <div className="flex items-center gap-3 border-l border-gray-200 pl-4 md:pl-8">
                 <ShieldCheck className="text-emerald-600" size={24} />
-                <button 
+                <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-100 rounded text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition-all shadow-sm"
                 >
