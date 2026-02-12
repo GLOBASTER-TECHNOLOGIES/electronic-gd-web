@@ -17,7 +17,9 @@ interface Entry {
 
 interface GDData {
   division: string;
-  post: string;
+  post: string; // The generator uses this
+  postName?: string; // Added for compatibility
+  postCode?: string; // Added for compatibility
   diaryDate: string;
   pageSerialNo: number;
   entries: Entry[];
