@@ -5,19 +5,19 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Download, Shield, Calendar, MapPin } from "lucide-react";
 import { generateGDPDF } from "@/config/gdPdfGenerator";
-// Import the generator we created
 
-// Types to match your data structure
+// Types
 interface Entry {
     _id: string;
     entryNo: number;
     timeOfSubmission: string;
-    abstract?: string; // Optional in case data is missing
+    abstract?: string;
     details?: string;
     signature: {
         officerName: string;
         rank: string;
         post: string;
+        postCode?: string; // ✅ ADDED
         forceNumber: string;
     };
 }
@@ -69,25 +69,31 @@ export default function SingleGDViewPage() {
         generateGDPDF(safeGD);
     };
 
+    if (loading)
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="animate-spin text-gray-400" size={32} />
+            </div>
+        );
 
-    if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <Loader2 className="animate-spin text-gray-400" size={32} />
-        </div>
-    );
-
-    if (!gd) return (
-        <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
-            <p>Register not found.</p>
-            <button onClick={() => router.back()} className="mt-4 text-blue-600 hover:underline">Go Back</button>
-        </div>
-    );
+    if (!gd)
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
+                <p>Register not found.</p>
+                <button
+                    onClick={() => router.back()}
+                    className="mt-4 text-blue-600 hover:underline"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
 
     return (
         <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-900">
             <div className="max-w-5xl mx-auto bg-white shadow-md border border-gray-200 min-h-[11in]">
 
-                {/* --- HEADER --- */}
+                {/* HEADER */}
                 <div className="bg-[#1a233a] text-white p-8">
                     <div className="flex justify-between items-start">
                         <div>
@@ -97,7 +103,11 @@ export default function SingleGDViewPage() {
                             >
                                 <ArrowLeft size={16} /> Back to Dashboard
                             </button>
-                            <h1 className="text-3xl font-black uppercase tracking-tight mb-2">General Diary Register</h1>
+
+                            <h1 className="text-3xl font-black uppercase tracking-tight mb-2">
+                                General Diary Register
+                            </h1>
+
                             <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
                                 <span className="flex items-center gap-2">
                                     <Shield size={16} /> {gd.division} Division
@@ -106,7 +116,12 @@ export default function SingleGDViewPage() {
                                     <MapPin size={16} /> {gd.post}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <Calendar size={16} /> {new Date(gd.diaryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    <Calendar size={16} />{" "}
+                                    {new Date(gd.diaryDate).toLocaleDateString("en-GB", {
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric",
+                                    })}
                                 </span>
                             </div>
                         </div>
@@ -118,15 +133,20 @@ export default function SingleGDViewPage() {
                             >
                                 <Download size={16} /> Download Official PDF
                             </button>
+
                             <div className="mt-4">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Page Serial No</p>
-                                <p className="text-xl font-mono font-bold">{gd.pageSerialNo}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                    Page Serial No
+                                </p>
+                                <p className="text-xl font-mono font-bold">
+                                    {gd.pageSerialNo}
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* --- BODY (Preview Mode) --- */}
+                {/* BODY */}
                 <div className="p-8">
                     <div className="bg-yellow-50 border border-yellow-200 p-3 mb-6 text-xs text-yellow-800 font-bold uppercase tracking-wide text-center">
                         Preview Mode • Click Download to get the Official Form Format
@@ -142,42 +162,69 @@ export default function SingleGDViewPage() {
                                 <th className="py-3 pl-4 w-48 align-top">Officer Signature</th>
                             </tr>
                         </thead>
+
                         <tbody className="divide-y divide-gray-200">
                             {gd.entries.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-12 text-center text-gray-400 font-bold uppercase italic">
+                                    <td
+                                        colSpan={5}
+                                        className="py-12 text-center text-gray-400 font-bold uppercase italic"
+                                    >
                                         No entries recorded in this register.
                                     </td>
                                 </tr>
                             ) : (
                                 gd.entries.map((entry) => (
-                                    <tr key={entry._id} className="group">
+                                    <tr key={entry._id}>
                                         <td className="py-4 pr-4 font-mono text-xs font-bold text-gray-600 align-top">
-                                            {new Date(entry.timeOfSubmission).toLocaleTimeString('en-IN', {
-                                                hour: '2-digit', minute: '2-digit', hour12: false
-                                            })}
+                                            {new Date(entry.timeOfSubmission).toLocaleTimeString(
+                                                "en-IN",
+                                                { hour: "2-digit", minute: "2-digit", hour12: false }
+                                            )}
                                         </td>
+
                                         <td className="py-4 px-2 font-black text-gray-900 align-top">
                                             {entry.entryNo}
                                         </td>
+
                                         <td className="py-4 px-4 font-bold uppercase text-gray-800 text-xs align-top">
-                                            {/* Use optional chaining in case data is missing */}
-                                            {entry.abstract || <span className="text-red-400 italic">Missing Data</span>}
+                                            {entry.abstract || (
+                                                <span className="text-red-400 italic">
+                                                    Missing Data
+                                                </span>
+                                            )}
                                         </td>
+
                                         <td className="py-4 px-4 text-gray-800 font-serif text-sm leading-relaxed align-top whitespace-pre-wrap">
-                                            {entry.details || <span className="text-gray-400 italic">No details recorded...</span>}
+                                            {entry.details || (
+                                                <span className="text-gray-400 italic">
+                                                    No details recorded...
+                                                </span>
+                                            )}
                                         </td>
+
+                                        {/* SIGNATURE COLUMN */}
                                         <td className="py-4 pl-4 align-top">
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col leading-tight">
                                                 <span className="font-bold text-xs uppercase text-black">
                                                     {entry.signature?.officerName}
                                                 </span>
+
                                                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
                                                     {entry.signature?.rank}
                                                 </span>
+
+                                                {/* ✅ Post Code Added Here */}
+                                                {entry.signature?.postCode && (
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                                        Post Code: {entry.signature.postCode}
+                                                    </span>
+                                                )}
+
                                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                                    {entry.signature?.forceNumber}
+                                                    Force No: {entry.signature?.forceNumber}
                                                 </span>
+
                                                 <span className="text-[9px] font-bold text-black uppercase tracking-wider mt-1 border-t border-gray-200 pt-1 inline-block">
                                                     {entry.signature?.post}
                                                 </span>
@@ -195,7 +242,6 @@ export default function SingleGDViewPage() {
                         End of Digital Record • Generated by RPF E-GD System
                     </p>
                 </div>
-
             </div>
         </div>
     );
