@@ -36,13 +36,28 @@ export default function PostsDashboard() {
     try {
       setLoading(true);
       setError("");
+
+      // 1. Get Current Identity
       const meRes = await axios.get("/api/auth/me");
       if (!meRes.data.success || !meRes.data.user) throw new Error("Verification failed.");
-      const myId = meRes.data.user._id;
-      const postRes = await axios.get("/api/post/get-post-data", {
-        params: { officerInCharge: myId }
-      });
-      if (postRes.data.success) setPosts(postRes.data.data);
+
+      const currentUser = meRes.data.user;
+      const userType = meRes.data.userType; // "OFFICER" or "POST"
+
+      // 2. Logic Branch
+      if (userType === "POST") {
+        // CASE A: Logged in as Station -> The user object IS the post
+        setPosts([currentUser]);
+      } else {
+        // CASE B: Logged in as Officer -> Fetch posts assigned to this officer
+        const postRes = await axios.get("/api/post/get-post-data", {
+          params: { officerInCharge: currentUser._id }
+        });
+        if (postRes.data.success) {
+          setPosts(postRes.data.data);
+        }
+      }
+
     } catch (err: any) {
       setError("Records could not be retrieved at this time.");
     } finally {
