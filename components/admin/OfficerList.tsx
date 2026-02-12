@@ -1,6 +1,18 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Edit, Trash2, Shield, Loader2, Phone, MapPin, BadgeCheck, UserCog } from 'lucide-react';
+import { 
+  Search, 
+  Filter, 
+  Edit, 
+  Trash2, 
+  Shield, 
+  Loader2, 
+  Phone, 
+  MapPin, 
+  BadgeCheck, 
+  UserCog,
+  Hash // 1. Added Hash icon
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -13,12 +25,12 @@ interface Officer {
   railwayZone: string;
   division: string;
   postName: string;
+  postCode?: string; // 2. Added postCode to interface
   mobileNumber: string;
   lastLoginAt?: string;
   status?: string;
 }
 
-// 1. Define Props Interface
 interface OfficerListProps {
   onEdit?: (id: string) => void;
 }
@@ -28,6 +40,7 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ... (Fetch logic remains the same) ...
   const fetchOfficers = async (query = '') => {
     setLoading(true);
     try {
@@ -57,6 +70,8 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
 
   return (
     <div className="space-y-6">
+      {/* ... (Header, Search, and Loading states remain same) ... */}
+      
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -106,14 +121,13 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {officers.map((officer) => (
-              // 2. Pass onEdit prop to Card
               <OfficerCard key={officer._id} officer={officer} onEdit={onEdit} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Footer Pagination */}
+      {/* Footer (Same as before) */}
       {!loading && officers.length > 0 && (
         <div className="flex items-center justify-between text-sm text-gray-500 px-2 pt-2 border-t border-gray-100">
           <span>Showing {officers.length} records</span>
@@ -127,7 +141,6 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
   );
 }
 
-// 3. Update OfficerCard to accept and use onEdit
 function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: string) => void }) {
   const isLoginActive = !!officer.lastLoginAt;
 
@@ -149,7 +162,7 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
           </div>
         </div>
 
-        {/* Action Menu - EDIT BUTTON LOGIC */}
+        {/* Action Menu */}
         <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
           {onEdit && (
             <button 
@@ -168,14 +181,29 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
 
       {/* Middle Section */}
       <div className="space-y-3 mb-5">
-        <div className="bg-gray-50 rounded-xl p-3 text-xs space-y-1.5 border border-gray-100">
+        
+        {/* 3. UPDATED LOCATION BOX WITH POST CODE */}
+        <div className="bg-gray-50 rounded-xl p-3 text-xs space-y-2 border border-gray-100">
+          {/* Post Name and Division */}
           <div className="flex items-start gap-2 text-gray-600">
             <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
-            <div>
+            <div className="flex-1">
               <span className="font-semibold text-gray-900 block">{officer.postName}</span>
               <span className="text-gray-500">{officer.division}, {officer.railwayZone}</span>
             </div>
           </div>
+
+          {/* Post Code Display */}
+          {officer.postCode && (
+            <div className="flex items-center gap-2 pl-6">
+              <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 rounded-md shadow-sm">
+                <Hash size={10} className="text-gray-400" />
+                <span className="font-mono font-bold text-[10px] text-gray-700 tracking-wider">
+                  {officer.postCode}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
