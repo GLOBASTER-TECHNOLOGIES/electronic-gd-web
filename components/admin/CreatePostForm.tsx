@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Save,
-  TrainFront
+  TrainFront,
+  Lock // Added Lock icon
 } from "lucide-react";
 
 export default function CreatePostForm() {
@@ -25,6 +26,7 @@ export default function CreatePostForm() {
     contactNumber: "",
     address: "",
     officerForceId: "", 
+    password: "", // Added password field
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -48,6 +50,7 @@ export default function CreatePostForm() {
           contactNumber: "",
           address: "",
           officerForceId: "",
+          password: "",
         });
       }
     } catch (error: any) {
@@ -81,7 +84,7 @@ export default function CreatePostForm() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* LEFT COLUMN: Main Station Info (Spans 2 columns on large screens) */}
+        {/* LEFT COLUMN: Main Station Info */}
         <div className="lg:col-span-2 space-y-6">
           
           {/* CARD 1: Essential Details */}
@@ -91,6 +94,7 @@ export default function CreatePostForm() {
             </h3>
             
             <div className="space-y-6">
+              {/* Row 1: Name & Code */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-600 uppercase">Post Name <span className="text-red-500">*</span></label>
@@ -116,17 +120,37 @@ export default function CreatePostForm() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 uppercase">Division <span className="text-red-500">*</span></label>
-                <input
-                  name="division"
-                  value={formData.division}
-                  onChange={handleChange}
-                  placeholder="E.g. TRICHY"
-                  required
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 uppercase transition-all"
-                />
+              {/* Row 2: Division & Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Division <span className="text-red-500">*</span></label>
+                  <input
+                    name="division"
+                    value={formData.division}
+                    onChange={handleChange}
+                    placeholder="E.g. TRICHY"
+                    required
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 uppercase transition-all"
+                  />
+                </div>
+                
+                {/* NEW PASSWORD FIELD */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
+                    <Lock size={12} className="text-slate-400" /> Station Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Set Desk Login Password"
+                    required
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 transition-all"
+                  />
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -163,7 +187,6 @@ export default function CreatePostForm() {
 
         </div>
 
-
         {/* RIGHT COLUMN: Officer Assign & Actions */}
         <div className="space-y-6">
           
@@ -179,15 +202,15 @@ export default function CreatePostForm() {
              <div className="space-y-4">
                <label className="text-xs font-bold text-slate-600 uppercase">Officer Force ID</label>
                <input
-                  name="officerForceId"
-                  value={formData.officerForceId}
-                  onChange={handleChange}
-                  placeholder="E.g. 95123"
-                  className="w-full p-3.5 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none font-mono text-lg text-center tracking-widest text-slate-800 placeholder:text-slate-300 transition-all"
-                />
-                <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-                  Enter the Force ID. The system will auto-link the profile if found. Leave empty to assign later.
-                </p>
+                 name="officerForceId"
+                 value={formData.officerForceId}
+                 onChange={handleChange}
+                 placeholder="E.g. 95123"
+                 className="w-full p-3.5 bg-white border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none font-mono text-lg text-center tracking-widest text-slate-800 placeholder:text-slate-300 transition-all"
+               />
+               <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                 Enter the Force ID. The system will auto-link the profile if found. Leave empty to assign later.
+               </p>
              </div>
           </div>
 
