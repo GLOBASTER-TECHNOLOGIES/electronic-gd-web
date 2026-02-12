@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Shield, Search, Calendar, Hash, MapPin, Loader2, AlertTriangle, ArrowRightLeft, 
+import {
+  Shield, Search, Calendar, Hash, MapPin, Loader2, AlertTriangle, ArrowRightLeft,
   Copy, FileBadge, Fingerprint, CheckCircle2, Clock, User, ArrowLeft
 } from "lucide-react";
 
@@ -49,13 +49,13 @@ interface IAdminData {
    ================================================================================= */
 
 /* --- COMPONENT: Search View --- */
-const SearchConsole = ({ 
-  loading, 
-  error, 
-  searchParams, 
-  setSearchParams, 
-  onSearch 
-}: { 
+const SearchConsole = ({
+  loading,
+  error,
+  searchParams,
+  setSearchParams,
+  onSearch
+}: {
   loading: boolean;
   error: string;
   searchParams: any;
@@ -70,7 +70,7 @@ const SearchConsole = ({
           <h1 className="text-xl font-bold text-white uppercase tracking-wider">GD Correction Console</h1>
           <p className="text-slate-400 text-xs mt-1">Authorized Personnel Only</p>
         </div>
-        
+
         <form onSubmit={onSearch} className="p-8 space-y-5">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded flex items-center gap-2">
@@ -87,7 +87,7 @@ const SearchConsole = ({
               required
               placeholder="e.g. NDLS-MAIN"
               value={searchParams.station}
-              onChange={(e) => setSearchParams({...searchParams, station: e.target.value.toUpperCase()})}
+              onChange={(e) => setSearchParams({ ...searchParams, station: e.target.value.toUpperCase() })}
               className="w-full p-3 border border-slate-300 rounded text-sm outline-none focus:border-slate-500 font-bold text-slate-900 placeholder-slate-300 uppercase"
             />
           </div>
@@ -96,11 +96,11 @@ const SearchConsole = ({
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-1.5">
                 <Calendar className="w-3 h-3" /> GD Date
               </label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 required
                 value={searchParams.date}
-                onChange={(e) => setSearchParams({...searchParams, date: e.target.value})}
+                onChange={(e) => setSearchParams({ ...searchParams, date: e.target.value })}
                 className="w-full p-3 border border-slate-300 rounded text-sm outline-none focus:border-slate-500"
               />
             </div>
@@ -108,18 +108,18 @@ const SearchConsole = ({
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-1.5">
                 <Hash className="w-3 h-3" /> Entry No.
               </label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 placeholder="e.g. 42"
                 value={searchParams.entryNo}
-                onChange={(e) => setSearchParams({...searchParams, entryNo: e.target.value})}
+                onChange={(e) => setSearchParams({ ...searchParams, entryNo: e.target.value })}
                 className="w-full p-3 border border-slate-300 rounded text-sm outline-none focus:border-slate-500 font-mono"
               />
             </div>
           </div>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading || !searchParams.station || !searchParams.entryNo}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -144,8 +144,8 @@ const CorrectionHeader = ({ entryNo, onBack }: { entryNo: number, onBack: () => 
         <p className="text-slate-400 text-xs uppercase tracking-wider">
           Form 24-B • Electronic Record Amendment
         </p>
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={onBack}
           className="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-0.5 rounded text-white flex items-center gap-1"
         >
@@ -161,11 +161,11 @@ const CorrectionHeader = ({ entryNo, onBack }: { entryNo: number, onBack: () => 
 );
 
 /* --- COMPONENT: Metadata Strip --- */
-const EntryMetadata = ({ postCode, entryTime, diaryDate, signature }: { 
-  postCode: string, 
-  entryTime: string, 
-  diaryDate: string, 
-  signature: any 
+const EntryMetadata = ({ postCode, entryTime, diaryDate, signature }: {
+  postCode: string,
+  entryTime: string,
+  diaryDate: string,
+  signature: any
 }) => (
   <div className="bg-slate-50 border-b border-gray-200 px-8 py-3 flex flex-wrap gap-6 text-sm">
     <div className="flex items-center gap-2 text-gray-600">
@@ -184,11 +184,11 @@ const EntryMetadata = ({ postCode, entryTime, diaryDate, signature }: {
 );
 
 /* --- COMPONENT: Workspace (Split View) --- */
-const CorrectionWorkspace = ({ 
-  original, 
-  formData, 
-  setFormData, 
-  onRestore 
+const CorrectionWorkspace = ({
+  original,
+  formData,
+  setFormData,
+  onRestore
 }: {
   original: IGDEntry,
   formData: IFormData,
@@ -227,8 +227,8 @@ const CorrectionWorkspace = ({
       {/* RIGHT: CORRECTION */}
       <div className="w-full md:w-7/12 p-6 bg-white">
         <div className="flex items-center gap-2 mb-6">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Amendment Data</h3>
-            <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">ACTIVE EDIT</span>
+          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest">Amendment Data</h3>
+          <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">ACTIVE EDIT</span>
         </div>
         <div className="space-y-5">
           <div>
@@ -236,7 +236,7 @@ const CorrectionWorkspace = ({
             <input
               type="text"
               value={formData.abstract}
-              onChange={(e) => setFormData({...formData, abstract: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
               className="w-full text-sm font-semibold text-slate-900 border border-slate-300 rounded-md p-3 focus:ring-2 focus:ring-slate-900 outline-none transition-all"
             />
           </div>
@@ -244,7 +244,7 @@ const CorrectionWorkspace = ({
             <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5">Revised Details</label>
             <textarea
               value={formData.details}
-              onChange={(e) => setFormData({...formData, details: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, details: e.target.value })}
               className="w-full text-sm leading-relaxed text-slate-900 border border-slate-300 rounded-md p-3 min-h-[200px] focus:ring-2 focus:ring-slate-900 outline-none transition-all resize-none font-medium"
             />
           </div>
@@ -285,12 +285,12 @@ const AuthorizationFooter = ({
           </label>
           <textarea
             value={formData.reason}
-            onChange={(e) => setFormData({...formData, reason: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
             placeholder="State official reason (e.g. Typographical Error, Factual Update)..."
             className="w-full flex-1 text-sm border border-gray-300 rounded-md p-3 focus:border-amber-500 outline-none h-32"
           />
         </div>
-        
+
         {/* ADMIN PROTOTYPE INPUTS */}
         <div className="bg-white border border-slate-200 rounded-md p-4">
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -299,15 +299,15 @@ const AuthorizationFooter = ({
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-3 text-[10px] font-bold text-slate-500">REQUESTED BY</div>
-              <input type="text" placeholder="Rank" value={adminData.reqRank} onChange={e=>setAdminData({...adminData, reqRank: e.target.value})} className="text-xs p-2 border rounded" />
-              <input type="text" placeholder="Name" value={adminData.reqName} onChange={e=>setAdminData({...adminData, reqName: e.target.value})} className="col-span-2 text-xs p-2 border rounded" />
-              <input type="text" placeholder="Force No" value={adminData.reqForceNo} onChange={e=>setAdminData({...adminData, reqForceNo: e.target.value})} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
+              <input type="text" placeholder="Rank" value={adminData.reqRank} onChange={e => setAdminData({ ...adminData, reqRank: e.target.value })} className="text-xs p-2 border rounded" />
+              <input type="text" placeholder="Name" value={adminData.reqName} onChange={e => setAdminData({ ...adminData, reqName: e.target.value })} className="col-span-2 text-xs p-2 border rounded" />
+              <input type="text" placeholder="Force No" value={adminData.reqForceNo} onChange={e => setAdminData({ ...adminData, reqForceNo: e.target.value })} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-3 text-[10px] font-bold text-slate-500 mt-1">APPROVED BY (ADMIN)</div>
-              <input type="text" placeholder="Rank" value={adminData.appRank} onChange={e=>setAdminData({...adminData, appRank: e.target.value})} className="text-xs p-2 border rounded" />
-              <input type="text" placeholder="Name" value={adminData.appName} onChange={e=>setAdminData({...adminData, appName: e.target.value})} className="col-span-2 text-xs p-2 border rounded" />
-              <input type="text" placeholder="Force No" value={adminData.appForceNo} onChange={e=>setAdminData({...adminData, appForceNo: e.target.value})} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
+              <input type="text" placeholder="Rank" value={adminData.appRank} onChange={e => setAdminData({ ...adminData, appRank: e.target.value })} className="text-xs p-2 border rounded" />
+              <input type="text" placeholder="Name" value={adminData.appName} onChange={e => setAdminData({ ...adminData, appName: e.target.value })} className="col-span-2 text-xs p-2 border rounded" />
+              <input type="text" placeholder="Force No" value={adminData.appForceNo} onChange={e => setAdminData({ ...adminData, appForceNo: e.target.value })} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
             </div>
           </div>
         </div>
@@ -321,7 +321,7 @@ const AuthorizationFooter = ({
           <button type="button" onClick={onCancel} className="px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded transition-colors">
             Cancel
           </button>
-          <button 
+          <button
             onClick={onSubmit}
             disabled={isSubmitting || formData.reason.length < 5}
             className="px-8 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -357,7 +357,7 @@ const CorrectionPage = () => {
 
   const [selectedEntry, setSelectedEntry] = useState<IGDEntry | null>(null);
   const [parentGD, setParentGD] = useState<IGDDocument | null>(null);
-  
+
   const [formData, setFormData] = useState<IFormData>({
     abstract: "",
     details: "",
@@ -376,35 +376,46 @@ const CorrectionPage = () => {
   // --- LOGIC: SEARCH ---
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!searchParams.entryNo || !searchParams.station) return;
+    if (!searchParams.entryNo || !searchParams.station) return;
 
     setLoading(true);
     setError("");
 
     try {
+      // Calling your EXISTING route
       const query = new URLSearchParams({
         postCode: searchParams.station,
         date: searchParams.date
       }).toString();
 
-      const res = await fetch(`/api/gd/get-entry?${query}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-      });
+      const res = await fetch(`/api/gd/get-entry?${query}`);
+
+      // Safety check: is the response actually JSON?
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server did not return JSON. Check API route.");
+      }
 
       const result = await res.json();
-      if (!res.ok || !result.success || !result.data) {
-        throw new Error(result.message || "No General Diary found for this Station/Date.");
+
+      if (!result.success) throw new Error(result.message || "Failed to fetch");
+
+      // ✅ Handle CASE 2 where data might be null (GD not created yet)
+      if (!result.data) {
+        throw new Error(`No General Diary found for ${searchParams.station} on this date.`);
       }
 
       const gdDoc: IGDDocument = result.data;
       const targetEntryNo = parseInt(searchParams.entryNo);
+
+      // Find the entry inside the document
       const foundEntry = gdDoc.entries.find((e) => e.entryNo === targetEntryNo);
 
       if (!foundEntry) {
-        throw new Error(`GD exists, but Entry #${targetEntryNo} was not found in it.`);
+        throw new Error(`Entry #${targetEntryNo} does not exist in this GD.`);
       }
 
+      // Success
       setParentGD(gdDoc);
       setSelectedEntry(foundEntry);
       setFormData({
@@ -412,11 +423,11 @@ const CorrectionPage = () => {
         details: foundEntry.details,
         reason: ""
       });
-
-      setView("CORRECT"); 
+      setView("CORRECT");
 
     } catch (err: any) {
       setError(err.message);
+      console.error("Search Error:", err);
     } finally {
       setLoading(false);
     }
@@ -426,13 +437,13 @@ const CorrectionPage = () => {
   const handleSubmitCorrection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEntry || !parentGD) return;
-    
+
     setIsSubmitting(true);
 
     try {
       const payload = {
         originalEntryId: selectedEntry._id,
-        dailyGDId: parentGD._id, 
+        dailyGDId: parentGD._id,
         entryNo: selectedEntry.entryNo,
         postCode: parentGD.postCode,
         diaryDate: parentGD.diaryDate,
@@ -442,16 +453,16 @@ const CorrectionPage = () => {
         },
         reason: formData.reason,
         requestedBy: {
-            name: adminData.reqName,
-            rank: adminData.reqRank,
-            forceNumber: adminData.reqForceNo,
-            officerId: "65c4a7f0e5b9c02d12345678"
+          name: adminData.reqName,
+          rank: adminData.reqRank,
+          forceNumber: adminData.reqForceNo,
+          officerId: "65c4a7f0e5b9c02d12345678"
         },
         approvedBy: {
-            name: adminData.appName,
-            rank: adminData.appRank,
-            forceNumber: adminData.appForceNo,
-            officerId: "65c4a7f0e5b9c02d87654321",
+          name: adminData.appName,
+          rank: adminData.appRank,
+          forceNumber: adminData.appForceNo,
+          officerId: "65c4a7f0e5b9c02d87654321",
         }
       };
 
@@ -467,9 +478,9 @@ const CorrectionPage = () => {
         throw new Error(result.error || "Correction Failed");
       }
 
-      alert("Correction Signed & Logged Successfully!"); 
+      alert("Correction Signed & Logged Successfully!");
       setView("SEARCH");
-      setSearchParams({...searchParams, entryNo: ""});
+      setSearchParams({ ...searchParams, entryNo: "" });
 
     } catch (err: any) {
       alert("Error: " + err.message);
@@ -485,12 +496,12 @@ const CorrectionPage = () => {
 
   // --- RENDER ---
   if (view === "SEARCH") {
-    return <SearchConsole 
-      loading={loading} 
-      error={error} 
-      searchParams={searchParams} 
-      setSearchParams={setSearchParams} 
-      onSearch={handleSearch} 
+    return <SearchConsole
+      loading={loading}
+      error={error}
+      searchParams={searchParams}
+      setSearchParams={setSearchParams}
+      onSearch={handleSearch}
     />;
   }
 
@@ -499,27 +510,27 @@ const CorrectionPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 font-sans text-gray-800 flex justify-center">
       <div className="w-full max-w-5xl bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden flex flex-col">
-        
-        <CorrectionHeader 
-          entryNo={selectedEntry.entryNo} 
-          onBack={() => setView("SEARCH")} 
+
+        <CorrectionHeader
+          entryNo={selectedEntry.entryNo}
+          onBack={() => setView("SEARCH")}
         />
-        
-        <EntryMetadata 
-          postCode={parentGD.postCode} 
-          entryTime={selectedEntry.entryTime} 
-          diaryDate={parentGD.diaryDate} 
-          signature={selectedEntry.signature} 
+
+        <EntryMetadata
+          postCode={parentGD.postCode}
+          entryTime={selectedEntry.entryTime}
+          diaryDate={parentGD.diaryDate}
+          signature={selectedEntry.signature}
         />
-        
-        <CorrectionWorkspace 
-          original={selectedEntry} 
-          formData={formData} 
+
+        <CorrectionWorkspace
+          original={selectedEntry}
+          formData={formData}
           setFormData={setFormData}
           onRestore={handleCopyOriginal}
         />
-        
-        <AuthorizationFooter 
+
+        <AuthorizationFooter
           formData={formData}
           setFormData={setFormData}
           adminData={adminData}
