@@ -10,7 +10,9 @@ import {
   Phone, 
   Loader2,
   TrainFront,
-  UserSquare2
+  UserSquare2,
+  Edit, // Added icon
+  Settings // Added icon
 } from "lucide-react";
 
 interface Post {
@@ -27,7 +29,13 @@ interface Post {
   } | null;
 }
 
-export default function PostList() {
+// 1. Add props interface
+interface PostListProps {
+  onEdit?: (id: string) => void; 
+}
+
+// 2. Accept the prop
+export default function PostList({ onEdit }: PostListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,7 +132,8 @@ export default function PostList() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts.map((post) => (
-            <PostCard key={post._id} post={post} />
+            // 3. Pass onEdit to PostCard
+            <PostCard key={post._id} post={post} onEdit={onEdit} />
           ))}
         </div>
       )}
@@ -132,7 +141,7 @@ export default function PostList() {
   );
 }
 
-// Sub-components for cleaner code
+// Sub-components
 function StatCard({ label, value, icon }: { label: string, value: number, icon: React.ReactNode }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
@@ -145,9 +154,12 @@ function StatCard({ label, value, icon }: { label: string, value: number, icon: 
   );
 }
 
-function PostCard({ post }: { post: Post }) {
+// 4. Update PostCard props
+function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void }) {
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+      
+      {/* CARD HEADER */}
       <div className="p-5 border-b border-slate-50 bg-slate-50/50 flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -162,8 +174,20 @@ function PostCard({ post }: { post: Post }) {
             {post.postName}
           </h3>
         </div>
+        
+        {/* EDIT BUTTON */}
+        {onEdit && (
+          <button 
+            onClick={() => onEdit(post._id)}
+            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm"
+            title="Edit Station Details"
+          >
+            <Settings size={16} />
+          </button>
+        )}
       </div>
 
+      {/* CARD BODY */}
       <div className="p-5 space-y-4 flex-1">
         <div className="flex items-start gap-3">
           <Phone size={16} className="text-slate-400 mt-0.5 shrink-0" />
@@ -185,11 +209,12 @@ function PostCard({ post }: { post: Post }) {
         </div>
       </div>
 
+      {/* CARD FOOTER */}
       <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${post.officerInCharge ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-400'}`}>
           {post.officerInCharge ? <UserSquare2 size={16} /> : "?"}
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-[10px] font-bold text-slate-400 uppercase">Officer In-Charge</p>
           <p className="text-xs font-bold text-slate-800">
             {post.officerInCharge 
@@ -197,6 +222,16 @@ function PostCard({ post }: { post: Post }) {
               : "Vacant"}
           </p>
         </div>
+        
+        {/* Mobile-friendly Edit link (optional secondary button) */}
+        {onEdit && (
+           <button 
+             onClick={() => onEdit(post._id)}
+             className="text-[10px] font-bold text-blue-600 hover:underline uppercase md:hidden"
+           >
+             Edit
+           </button>
+        )}
       </div>
     </div>
   );
