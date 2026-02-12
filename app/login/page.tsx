@@ -3,11 +3,13 @@
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { FaUserShield, FaLock, FaShieldAlt } from "react-icons/fa";
+import { FaUserShield, FaLock, FaShieldAlt, FaBuilding } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [forceNumber, setForceNumber] = useState("");
+  
+  // Renamed to userId to represent either Force No or Post Code
+  const [userId, setUserId] = useState(""); 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,9 +19,20 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    // LOGIC: Detect Login Type
+    // Railway Post Codes are usually alphabetic (e.g., "TPJ"). 
+    // Force Numbers usually contain digits (e.g., "951234" or "RPF123").
+    const hasDigits = /\d/.test(userId); 
+    const isPostLogin = !hasDigits; 
+
+    // Configuration based on type
+    const endpoint = isPostLogin ? "/api/post/login" : "/api/officer/login";
+    const payload = isPostLogin ? { postCode: userId, password } : { forceNumber: userId, password };
+    const redirectPath = isPostLogin ? "/post/dashboard" : "/gd/add-entry";
+
     try {
-      await axios.post("/api/officer/login", { forceNumber, password });
-      router.push("/admin");
+      await axios.post(endpoint, payload);
+      router.push(redirectPath);
     } catch (err: any) {
       setError(err?.response?.data?.message || "Invalid credentials.");
       setLoading(false);
@@ -51,23 +64,32 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-4">
-            {/* Force Number */}
+            {/* Force Number / Post Code Input */}
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                Force Number
+                Force Number / Post Code
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUserShield className="text-gray-400" />
+                  {/* Dynamic Icon based on input content */}
+                  {/\d/.test(userId) || userId === "" ? (
+                     <FaUserShield className="text-gray-400" /> 
+                  ) : (
+                     <FaBuilding className="text-gray-400" />
+                  )}
                 </div>
                 <input
                   type="text"
-                  placeholder="Enter Force No."
-                  className="w-full bg-gray-50 text-gray-900 border border-gray-300 rounded-md py-2.5 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all"
-                  onChange={(e) => setForceNumber(e.target.value)}
+                  placeholder="Enter Force No. or Station Code"
+                  className="w-full bg-gray-50 text-gray-900 border border-gray-300 rounded-md py-2.5 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent transition-all uppercase" // Added 'uppercase' class to force visual caps
+                  onChange={(e) => setUserId(e.target.value.toUpperCase())} // Force logic to use uppercase
+                  value={userId}
                   required
                 />
               </div>
+              <p className="text-[10px] text-gray-400 mt-1 italic">
+                Examples: "951234" (Officer) or "TPJ" (Post)
+              </p>
             </div>
 
             {/* Password */}
