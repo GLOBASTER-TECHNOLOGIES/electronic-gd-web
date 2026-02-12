@@ -2,8 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
-import { Loader2, ArrowLeft, Download, Shield, Calendar, MapPin, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Loader2,
+  ArrowLeft,
+  Download,
+  Shield,
+  Calendar,
+  MapPin,
+  AlertCircle,
+} from "lucide-react";
 import { generateGDPDF } from "@/config/gdPdfGenerator";
 
 interface Entry {
@@ -15,7 +23,7 @@ interface Entry {
   signature: {
     officerName: string;
     rank: string;
-    post: string;
+    postCode: string;
     forceNumber: string;
   };
 }
@@ -23,7 +31,8 @@ interface Entry {
 interface GDData {
   _id: string;
   division: string;
-  post: string;
+  postName: string;
+  postCode: string;
   diaryDate: string;
   pageSerialNo: number;
   entries: Entry[];
@@ -31,37 +40,47 @@ interface GDData {
 
 export default function SingleGDViewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const postCode = searchParams.get("postCode");
+
   const [gd, setGd] = useState<GDData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Hardcoded ID for debugging
-  const hardcodedId = "698bf56dcb6ca7bcf17f72b4";
-
   useEffect(() => {
     const fetchGD = async () => {
       try {
-        setLoading(true);
-        // Using the hardcoded ID in the API call
-        const res = await axios.get(`/api/gd/get-entry?id=${hardcodedId}`);
-
-        console.log("API Response:", res.data); // Check your console to see if data arrives
-
-        if (res.data.success) {
-          setGd(res.data.data);
-        } else {
-          setError("Data fetch was not successful");
+        if (!postCode) {
+          setError("Post code not provided.");
+          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error("Fetch Error:", err);
-        setError("Failed to connect to the server.");
+
+        setLoading(true);
+        setError(null);
+
+        const response = await axios.get("/api/gd/get-entry", {
+          params: {
+            postCode: postCode,
+          },
+        });
+
+        if (response.data.success && response.data.data) {
+          setGd(response.data.data);
+        } else {
+          setError("No General Diary found for this post.");
+        }
+      } catch (error) {
+        console.error("GD Fetch Error:", error);
+        setError("Failed to load register.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchGD();
-  }, []);
+  }, [postCode]);
 
   const handleDownloadPDF = () => {
     if (!gd) return;
@@ -78,47 +97,72 @@ export default function SingleGDViewPage() {
     generateGDPDF(safeGD);
   };
 
+  if (loading)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin text-blue-600 mb-4" size={48} />
+        <p className="text-sm font-bold uppercase tracking-widest text-gray-400">
+          Fetching Register...
+        </p>
+      </div>
+    );
 
-  if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <Loader2 className="animate-spin text-blue-600 mb-4" size={48} />
-      <p className="text-sm font-bold uppercase tracking-widest text-gray-400">Fetching Register {hardcodedId}...</p>
-    </div>
-  );
-
-  if (error || !gd) return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 p-4">
-      <AlertCircle size={48} className="text-red-500 mb-4" />
-      <h2 className="text-xl font-bold text-gray-900">Unable to Load Data</h2>
-      <p className="text-center mt-2 max-w-xs">{error || "The register ID does not exist in the database."}</p>
-      <button onClick={() => router.back()} className="mt-6 px-6 py-2 bg-black text-white rounded-full text-sm font-bold">
-        Go Back
-      </button>
-    </div>
-  );
+  if (error || !gd)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500 p-4">
+        <AlertCircle size={48} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-gray-900">
+          Unable to Load Data
+        </h2>
+        <p className="text-center mt-2 max-w-xs">
+          {error || "The register does not exist."}
+        </p>
+        <button
+          onClick={() => router.back()}
+          className="mt-6 px-6 py-2 bg-black text-white rounded-full text-sm font-bold"
+        >
+          Go Back
+        </button>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans text-gray-900">
       <div className="max-w-5xl mx-auto bg-white shadow-md border border-gray-200 min-h-[11in]">
-
-        {/* --- HEADER --- */}
         <div className="bg-[#1a233a] text-white p-8">
           <div className="flex justify-between items-start">
             <div>
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm font-bold uppercase transition-colors"
+                className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm font-bold uppercase"
               >
                 <ArrowLeft size={16} /> Back
               </button>
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">भारतीय रेल / INDIAN RAILWAYS</p>
-              <h1 className="text-3xl font-black uppercase tracking-tight mb-2">General Diary</h1>
+
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1">
+                भारतीय रेल / INDIAN RAILWAYS
+              </p>
+
+              <h1 className="text-3xl font-black uppercase tracking-tight mb-2">
+                General Diary
+              </h1>
+
               <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
-                <span className="flex items-center gap-2"><Shield size={16} /> {gd.division}</span>
-                <span className="flex items-center gap-2"><MapPin size={16} /> {gd.post}</span>
+                <span className="flex items-center gap-2">
+                  <Shield size={16} /> {gd.division}
+                </span>
+
+                <span className="flex items-center gap-2">
+                  <MapPin size={16} /> {gd.postName}
+                </span>
+
                 <span className="flex items-center gap-2">
                   <Calendar size={16} />
-                  {new Date(gd.diaryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {new Date(gd.diaryDate).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </span>
               </div>
             </div>
@@ -126,19 +170,23 @@ export default function SingleGDViewPage() {
             <div className="text-right">
               <button
                 onClick={handleDownloadPDF}
-                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold uppercase text-xs tracking-wider hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg"
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-bold uppercase text-xs tracking-wider"
               >
                 <Download size={16} /> Export Official PDF
               </button>
+
               <div className="mt-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Serial No</p>
-                <p className="text-2xl font-mono font-black text-white">{gd.pageSerialNo}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Serial No
+                </p>
+                <p className="text-2xl font-mono font-black text-white">
+                  {gd.pageSerialNo}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* --- TABLE --- */}
         <div className="p-8">
           <table className="w-full text-left text-sm border-collapse">
             <thead>
@@ -150,27 +198,39 @@ export default function SingleGDViewPage() {
                 <th className="py-4 pl-4 w-48 text-right">Signature</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-100">
               {gd.entries.map((entry) => (
-                <tr key={entry._id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="py-5 pr-4 font-mono text-xs font-bold text-gray-500 align-top">
-                    {new Date(entry.timeOfSubmission).toLocaleTimeString('en-IN', {
-                      hour: '2-digit', minute: '2-digit', hour12: false
-                    })}
+                <tr key={entry._id}>
+                  <td className="py-5 pr-4 font-mono text-xs font-bold text-gray-500">
+                    {new Date(entry.timeOfSubmission).toLocaleTimeString(
+                      "en-IN",
+                      { hour: "2-digit", minute: "2-digit", hour12: false }
+                    )}
                   </td>
-                  <td className="py-5 px-2 font-black text-gray-900 align-top text-center">
+
+                  <td className="py-5 px-2 text-center font-black">
                     {entry.entryNo}
                   </td>
-                  <td className="py-5 px-4 font-bold uppercase text-blue-900 text-xs align-top">
+
+                  <td className="py-5 px-4 font-bold uppercase text-blue-900 text-xs">
                     {entry.abstract}
                   </td>
-                  <td className="py-5 px-4 text-gray-700 font-serif text-sm leading-relaxed align-top whitespace-pre-wrap">
+
+                  <td className="py-5 px-4 whitespace-pre-wrap">
                     {entry.details}
                   </td>
-                  <td className="py-5 pl-4 align-top text-right">
-                    <p className="font-bold text-xs uppercase text-black">{entry.signature?.officerName}</p>
-                    <p className="text-[10px] font-medium text-gray-400 uppercase">{entry.signature?.forceNumber}</p>
-                    <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">{entry.signature?.post}</p>
+
+                  <td className="py-5 pl-4 text-right">
+                    <p className="font-bold text-xs uppercase">
+                      {entry.signature?.officerName}
+                    </p>
+                    <p className="text-[10px] text-gray-400 uppercase">
+                      {entry.signature?.forceNumber}
+                    </p>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">
+                      {entry.signature?.postCode}
+                    </p>
                   </td>
                 </tr>
               ))}
