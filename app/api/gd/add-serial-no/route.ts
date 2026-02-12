@@ -20,8 +20,6 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const { postCode, pageSerialNo } = body;
-    console.log("req came");
-    console.log(postCode, pageSerialNo)
 
     // 1. Basic Validation
     if (!postCode || pageSerialNo === undefined) {
