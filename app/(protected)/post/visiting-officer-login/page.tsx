@@ -3,13 +3,13 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
-import { 
-  Shield, 
-  Loader2, 
-  AlertCircle, 
-  ArrowLeft, 
-  Eye, 
-  EyeOff 
+import {
+  Shield,
+  Loader2,
+  AlertCircle,
+  ArrowLeft,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 // --- 1. THE LOGIC COMPONENT ---
@@ -30,26 +30,30 @@ function LoginForm() {
     setError("");
 
     try {
-      const res = await axios.post("/api/post/visiting-officer-login", {
-        forceNumber,
-        password,
-      });
+      await axios.post(
+        "/api/post/visiting-officer-login",
+        { forceNumber, password },
+        { withCredentials: true }
+      );
 
-      if (res.data.success) {
-        router.push(redirectTo);
-      }
+      router.replace(redirectTo);
+
     } catch (err: any) {
-      setError(err.response?.data?.message || "Authentication Failed: Invalid Credentials");
+      setError(
+        err.response?.data?.message ||
+        "Authentication Failed: Invalid Credentials"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4 font-sans">
-      
+
       {/* Back Button */}
-      <button 
+      <button
         onClick={() => router.back()}
         className="mb-6 flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-gray-900 uppercase tracking-widest transition-colors"
       >
@@ -57,7 +61,7 @@ function LoginForm() {
       </button>
 
       <div className="bg-white border border-gray-300 w-full max-w-sm overflow-hidden shadow-sm">
-        
+
         {/* Official Header Strip */}
         <div className="bg-slate-900 p-6 text-center text-white">
           <Shield className="mx-auto text-blue-400 mb-2" size={28} />
@@ -71,7 +75,7 @@ function LoginForm() {
 
         {/* Form Body */}
         <form onSubmit={handleLogin} className="p-8 space-y-6">
-          
+
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
               Force Number (Individual)
