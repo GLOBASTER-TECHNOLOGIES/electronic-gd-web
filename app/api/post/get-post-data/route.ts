@@ -10,24 +10,36 @@ export async function GET(request: NextRequest) {
 
     // 1. Extract Query Parameters
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id"); // <--- NEW: Extract ID
     const search = searchParams.get("search") || "";
     const division = searchParams.get("division") || "ALL";
-    const officerId = searchParams.get("officerInCharge"); // <--- Extract Officer ID
+    const officerId = searchParams.get("officerInCharge");
 
     // 2. Build the MongoDB Query Object
     const query: any = {};
 
-    // Filter by Division
+    // 👇 NEW: If ID is present, return that specific post immediately
+    if (id) {
+      const post = await Post.findById(id).populate(
+        "officerInCharge",
+        "name rank forceNumber",
+      );
+      if (!post) {
+        return NextResponse.json(
+          { success: false, message: "Post not found" },
+          { status: 404 },
+        );
+      }
+      return NextResponse.json({ success: true, data: post }, { status: 200 }); // Returns SINGLE object
+    }
+
+    /* ... Rest of your existing logic for lists ... */
     if (division !== "ALL") {
       query.division = division;
     }
-
-    // 👇 Filter by Officer ID (This makes "My Post" work)
     if (officerId) {
       query.officerInCharge = officerId;
     }
-
-    // Filter by Search Term
     if (search) {
       query.$or = [
         { postName: { $regex: search, $options: "i" } },
@@ -35,12 +47,11 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 3. Fetch from DB
     const posts = await Post.find(query)
-      .populate("officerInCharge", "name rank forceNumber") // Populates using the "Officer" model
+      .populate("officerInCharge", "name rank forceNumber")
       .sort({ division: 1, postName: 1 });
 
-    return NextResponse.json({ success: true, data: posts }, { status: 200 });
+    return NextResponse.json({ success: true, data: posts }, { status: 200 }); // Returns ARRAY
   } catch (error) {
     console.error("Filter Posts Error:", error);
     return NextResponse.json(
