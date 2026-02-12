@@ -29,7 +29,7 @@ export default function VisitingOfficerLogin() {
     setError("");
 
     try {
-      const res = await axios.post("/api/auth/visiting-officer-login", {
+      const res = await axios.post("/api/post/visiting-officer-login", {
         forceNumber,
         password,
       });
