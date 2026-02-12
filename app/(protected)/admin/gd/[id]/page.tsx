@@ -26,6 +26,7 @@ interface GDData {
     _id: string;
     division: string;
     post: string;
+    postName: string;
     diaryDate: string;
     pageSerialNo: number;
     entries: Entry[];
@@ -59,6 +60,7 @@ export default function SingleGDViewPage() {
 
         const safeGD = {
             ...gd,
+            post: gd.post || gd.postName, // ✅ ensure compatibility
             entries: gd.entries.map((entry) => ({
                 ...entry,
                 abstract: entry.abstract ?? "",
@@ -68,6 +70,7 @@ export default function SingleGDViewPage() {
 
         generateGDPDF(safeGD);
     };
+
 
     if (loading)
         return (
