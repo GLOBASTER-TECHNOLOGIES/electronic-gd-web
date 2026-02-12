@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
-import connectDB from "@/lib/db"; // Adjust path to your DB connection
 import GeneralDiary from "@/models/gd.model"; // Adjust path
 import GdCorrection from "@/models/gdCorrection.model"; // Adjust path
+import dbConnect from "@/config/dbConnect";
 
 export async function POST(req: NextRequest) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    await connectDB();
+    await dbConnect();
 
     // 1. Parse Payload
     const body = await req.json();
