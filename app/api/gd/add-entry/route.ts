@@ -6,171 +6,142 @@ import Post from "@/models/post.model";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
-/* =========================
-   Helper: Get Start/End of Day (IST)
-========================= */
-function getISTDayRange() {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-  istTime.setUTCHours(0, 0, 0, 0); 
-  
-  const startOfDay = new Date(istTime.getTime() - istOffset);
-  const endOfDay = new Date(startOfDay.getTime() + (24 * 60 * 60 * 1000) - 1);
-
-  return { startOfDay, endOfDay };
-}
-
 export async function POST(request: NextRequest) {
   await dbConnect();
 
   try {
     /* ==========================================
-       🔐 1. Authentication & Token Parsing
+       🔐 1. Token Extraction
     ========================================== */
     const postToken = request.cookies.get("postAccessToken")?.value;
-    const officerToken = request.cookies.get("accessToken")?.value;
+    const postRefresh = request.cookies.get("postRefreshToken")?.value;
+    const officerToken = request.cookies.get("officerAccessToken")?.value;
     const visitingToken = request.cookies.get("visitingAccessToken")?.value;
 
-    if (!postToken && !officerToken) {
-      return NextResponse.json({ message: "Authentication required" }, { status: 401 });
-    }
-
+    let signaturePayload: any = null;
+    let actorType: "POST" | "OFFICER" = "OFFICER";
     let primaryPayload: any = null;
-    let actorType = "OFFICER";
 
-    if (postToken) {
+    /* ==========================================
+       🛡️ 2. Dual-Case Logic Enforcement
+    ========================================== */
+    
+    // CASE A: VISITING OFFICER (Station Context)
+    // Requirement: Must have Post Access Token AND Post Refresh Token AND Visiting Token
+    if (postToken && postRefresh && visitingToken) {
       try {
         primaryPayload = jwt.verify(postToken, process.env.JWT_ACCESS_SECRET!);
+        signaturePayload = jwt.verify(visitingToken, process.env.JWT_VISITING_SECRET!);
         actorType = "POST";
-      } catch { return NextResponse.json({ message: "Invalid Post Token" }, { status: 401 }); }
-    } else {
+      } catch (err) {
+        return NextResponse.json({ message: "Station or Visiting session expired." }, { status: 401 });
+      }
+    } 
+    
+    // CASE B: NATIVE OFFICER (Individual Context)
+    // Requirement: Only Officer Access Token is required
+    else if (officerToken && !visitingToken) {
       try {
-        primaryPayload = jwt.verify(officerToken!, process.env.JWT_ACCESS_SECRET!);
+        primaryPayload = jwt.verify(officerToken, process.env.JWT_ACCESS_SECRET!);
+        signaturePayload = {
+          id: primaryPayload.id,
+          officerName: primaryPayload.name || (await Officer.findById(primaryPayload.id)).name,
+          rank: primaryPayload.rank,
+          forceNumber: primaryPayload.forceNumber,
+        };
         actorType = "OFFICER";
-      } catch { return NextResponse.json({ message: "Invalid Officer Token" }, { status: 401 }); }
+      } catch (err) {
+        return NextResponse.json({ message: "Officer session expired." }, { status: 401 });
+      }
     }
 
-    let visitingPayload: any = null;
-    if (visitingToken) {
-      try {
-        visitingPayload = jwt.verify(visitingToken, process.env.JWT_VISITING_SECRET!);
-      } catch { /* Ignored */ }
+    // 🛑 BLOCK: If neither case is satisfied
+    else {
+      let errorMessage = "Unauthorized access.";
+      if (postToken && !visitingToken) errorMessage = "Visiting officer signature missing for station entry.";
+      if (visitingToken && (!postToken || !postRefresh)) errorMessage = "Visiting officer can only mark entry on an active Station terminal.";
+      
+      return NextResponse.json({ message: errorMessage }, { status: 403 });
     }
 
     /* ==========================================
-       🏢 2. Fetch Post Context
+       🏢 3. Fetch Post/Station Context
     ========================================== */
     let postDoc = null;
-    const targetObjectId = actorType === "POST" ? primaryPayload.id : null;
-
-    if (targetObjectId) {
-      postDoc = await Post.findById(targetObjectId);
+    if (actorType === "POST") {
+      postDoc = await Post.findById(primaryPayload.id);
     } else {
       const officerDoc = await Officer.findById(primaryPayload.id);
-      if (!officerDoc) return NextResponse.json({ message: "Officer not found" }, { status: 404 });
+      if (!officerDoc) return NextResponse.json({ message: "Officer record not found" }, { status: 404 });
       
-      const postId = officerDoc.presentPosting || officerDoc.postId || officerDoc.post;
-      if (postId) postDoc = await Post.findById(postId);
-      else if (officerDoc.postCode) postDoc = await Post.findOne({ postCode: officerDoc.postCode });
+      const postId = officerDoc.postId || officerDoc.presentPosting || officerDoc.post;
+      postDoc = postId ? await Post.findById(postId) : await Post.findOne({ postCode: officerDoc.postCode });
     }
 
-    if (!postDoc) return NextResponse.json({ message: "No Post assigned" }, { status: 400 });
+    if (!postDoc) return NextResponse.json({ message: "Station context not found" }, { status: 400 });
 
     const targetPostCode = postDoc.postCode || postDoc.code;
     const targetPostName = postDoc.postName || postDoc.name;
-    const targetPostId = postDoc._id;
 
     /* ==========================================
-       📦 3. Prepare Entry Data
+       📦 4. Save Entry
     ========================================== */
     const body = await request.json();
-    const { division, abstract, details, timeOfSubmission } = body;
+    const { abstract, details, timeOfSubmission, division } = body;
 
-    let signature = {
-      officerId: body.officerId || primaryPayload.id,
-      officerName: body.officerName || primaryPayload.name,
-      rank: body.rank || primaryPayload.rank,
-      forceNumber: body.forceNumber || primaryPayload.forceNumber,
+    const signature = {
+      officerId: signaturePayload.id,
+      officerName: signaturePayload.officerName || signaturePayload.name,
+      rank: signaturePayload.rank,
+      forceNumber: signaturePayload.forceNumber,
       postCode: targetPostCode,
       postName: targetPostName,
       signedAt: new Date(),
     };
 
-    if (visitingPayload) {
-      signature = {
-        ...signature,
-        officerId: visitingPayload.id,
-        officerName: visitingPayload.officerName,
-        rank: visitingPayload.rank,
-        forceNumber: visitingPayload.forceNumber,
-      };
-    }
-
-    /* ==========================================
-       🔄 4. LOGIC: Find or Create
-    ========================================== */
-    const { startOfDay, endOfDay } = getISTDayRange();
-
-    const createEntryObject = (entryNo: number) => ({
-      entryNo,
+    const entry = {
+      entryNo: 0, // Calculated below
       entryTime: new Date(),
       timeOfSubmission: new Date(timeOfSubmission),
       abstract,
       details,
       signature,
-      isCorrected: false
-    });
+    };
 
-    let gd = await GeneralDiary.findOne({
-      postCode: targetPostCode, 
-      diaryDate: { $gte: startOfDay, $lte: endOfDay },
-    });
+    const istDate = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
+    istDate.setUTCHours(0, 0, 0, 0);
+    const startOfDay = new Date(istDate.getTime() - 5.5 * 60 * 60 * 1000);
 
-    if (gd) {
-      const nextEntryNo = (gd.lastEntryNo || 0) + 1;
-      gd.entries.push(createEntryObject(nextEntryNo));
-      gd.lastEntryNo = nextEntryNo;
-      await gd.save();
-      return NextResponse.json({ success: true, message: "Entry added", entryNo: nextEntryNo });
-    }
-
-    // STEP B: Create New GD (Serial No removed)
-    try {
-      gd = await GeneralDiary.create({
-        postId: targetPostId,
-        postCode: targetPostCode,
-        postName: targetPostName,
-        division: division || primaryPayload.division || postDoc.division || "N/A",
-        diaryDate: startOfDay, 
-        entries: [createEntryObject(1)],
-        lastEntryNo: 1,
-        createdBy: new mongoose.Types.ObjectId(primaryPayload.id),
-        // ✅ pageSerialNo is omitted here so it defaults to undefined/null
-      });
-
-      return NextResponse.json({ success: true, message: "New GD Created", entryNo: 1 }, { status: 201 });
-
-    } catch (createError: any) {
-      if (createError.code === 11000) {
-        gd = await GeneralDiary.findOne({
-           postCode: targetPostCode,
-           diaryDate: { $gte: startOfDay, $lte: endOfDay },
-        });
-
-        if (gd) {
-           const nextEntryNo = (gd.lastEntryNo || 0) + 1;
-           gd.entries.push(createEntryObject(nextEntryNo));
-           gd.lastEntryNo = nextEntryNo;
-           await gd.save();
-           return NextResponse.json({ success: true, message: "Entry added (Recovered)", entryNo: nextEntryNo });
+    const gd = await GeneralDiary.findOneAndUpdate(
+      { postCode: targetPostCode, diaryDate: startOfDay },
+      { 
+        $inc: { lastEntryNo: 1 },
+        $setOnInsert: { 
+          postId: postDoc._id,
+          postName: targetPostName,
+          division: division || postDoc.division || "N/A",
+          createdBy: primaryPayload.id,
+          status: "ACTIVE"
         }
-      }
-      throw createError;
+      },
+      { upsert: true, new: true }
+    );
+
+    entry.entryNo = gd.lastEntryNo;
+    gd.entries.push(entry);
+    await gd.save();
+
+    const response = NextResponse.json({ success: true, message: "Entry recorded", entryNo: entry.entryNo });
+
+    // ✅ Automatically wipe the visiting signature after use
+    if (visitingToken) {
+      response.cookies.set("visitingAccessToken", "", { maxAge: 0, path: "/" });
     }
+
+    return response;
 
   } catch (error: any) {
-    console.error("GD Error:", error);
-    return NextResponse.json({ message: error.message || "Internal Server Error" }, { status: 500 });
+    console.error("Critical GD Error:", error);
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
