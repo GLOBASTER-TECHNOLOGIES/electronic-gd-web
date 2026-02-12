@@ -31,19 +31,39 @@ function UpdateSerialForm() {
     const fetchTodayGD = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`/api/gd/get-entry?postId=${postId}`);
+
+            // Get Post Info
+            const postRes = await axios.get(`/api/post/get-post-data`, {
+                params: { id: postId }
+            });
+
+            if (!postRes.data.success || !postRes.data.data) {
+                setLoading(false);
+                return;
+            }
+
+            const postCode = postRes.data.data.postCode;
+
+            // Fetch today's GD
+            const res = await axios.get(`/api/gd/get-entry`, {
+                params: { postCode }
+            });
+
             if (res.data.success && res.data.data) {
                 setGd(res.data.data);
-                if (res.data.data.pageSerialNo && res.data.data.pageSerialNo !== 0) {
+
+                if (res.data.data.pageSerialNo) {
                     setNewSerial(res.data.data.pageSerialNo.toString());
                 }
             }
+
         } catch (err) {
             console.error("Fetch error:", err);
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,7 +72,7 @@ function UpdateSerialForm() {
 
         try {
             const res = await axios.patch("/api/gd/add-serial-no", {
-                postId: postId,
+                postCode: gd.postCode,   // ✅ send postCode instead
                 pageSerialNo: parseInt(newSerial),
             });
 
@@ -60,12 +80,17 @@ function UpdateSerialForm() {
                 setMessage({ type: "success", text: "Authenticated successfully." });
                 setGd({ ...gd, pageSerialNo: parseInt(newSerial) });
             }
+
         } catch (err: any) {
-            setMessage({ type: "error", text: err.response?.data?.message || "Failed to update." });
+            setMessage({
+                type: "error",
+                text: err.response?.data?.message || "Failed to update.",
+            });
         } finally {
             setUpdating(false);
         }
     };
+
 
     const isLocked = gd?.pageSerialNo !== 0 && gd?.pageSerialNo !== undefined;
 
@@ -140,8 +165,8 @@ function UpdateSerialForm() {
                                 type="submit"
                                 disabled={updating || isLocked}
                                 className={`w-full p-4 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${isLocked
-                                        ? "bg-slate-100 text-slate-300"
-                                        : "bg-slate-900 text-white hover:bg-black"
+                                    ? "bg-slate-100 text-slate-300"
+                                    : "bg-slate-900 text-white hover:bg-black"
                                     }`}
                             >
                                 {isLocked ? <><Lock size={14} /> Record Authenticated</> : updating ? "Processing..." : "Update Serial No."}
