@@ -8,25 +8,37 @@ import CreateOfficerForm from '@/components/admin/CreateOfficerForm';
 import AdminGDViewer from '@/components/admin/AdminGDViewer';
 import CreatePostForm from '@/components/admin/CreatePostForm';
 import PostList from '@/components/admin/PostList';
-import UpdatePostForm from '@/components/admin/UpdatePostForm'; // <--- 1. Import the Update Form
+import UpdatePostForm from '@/components/admin/UpdatePostForm'; 
+import UpdateOfficerForm from '@/components/admin/UpdateOfficerForm'; // Ensure you created this
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // 2. Add state to track which post is being edited
+  // --- EDITING STATE MANAGEMENT ---
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingOfficerId, setEditingOfficerId] = useState<string | null>(null);
 
-  // 3. Helper function to start editing
+  // --- POST HANDLERS ---
   const handleEditPost = (postId: string) => {
     setEditingPostId(postId);
-    setActiveTab('update-post'); // Switch to a temporary 'update-post' tab
+    setActiveTab('update-post'); 
   };
 
-  // 4. Helper function to cancel editing
-  const handleCancelEdit = () => {
+  const handleCancelPostEdit = () => {
     setEditingPostId(null);
-    setActiveTab('posts'); // Return to the list view
+    setActiveTab('posts'); 
+  };
+
+  // --- OFFICER HANDLERS ---
+  const handleEditOfficer = (officerId: string) => {
+    setEditingOfficerId(officerId);
+    setActiveTab('update-officer');
+  };
+
+  const handleCancelOfficerEdit = () => {
+    setEditingOfficerId(null);
+    setActiveTab('officers');
   };
 
   return (
@@ -36,8 +48,9 @@ export default function AdminDashboard() {
       <Sidebar
         activeTab={activeTab}
         setActiveTab={(tab) => {
-           // If user clicks a sidebar link, reset any editing state
+           // Reset all editing states if user clicks sidebar
            setEditingPostId(null);
+           setEditingOfficerId(null);
            setActiveTab(tab);
         }}
         isOpen={isSidebarOpen}
@@ -63,6 +76,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* --- OFFICER MANAGEMENT --- */}
             {activeTab === 'create-officer' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <CreateOfficerForm />
@@ -71,16 +85,22 @@ export default function AdminDashboard() {
 
             {activeTab === 'officers' && (
               <div className="animate-in fade-in duration-500">
-                <OfficerList />
+                {/* Pass the edit handler */}
+                <OfficerList onEdit={handleEditOfficer} />
               </div>
             )}
 
-            {activeTab === 'gd-viewer' && (
-              <div className="animate-in fade-in duration-500">
-                <AdminGDViewer />
+            {activeTab === 'update-officer' && editingOfficerId && (
+              <div className="animate-in slide-in-from-right-4 duration-500">
+                <UpdateOfficerForm 
+                  officerId={editingOfficerId}
+                  onCancel={handleCancelOfficerEdit}
+                  onSuccess={handleCancelOfficerEdit}
+                />
               </div>
             )}
 
+            {/* --- POST MANAGEMENT --- */}
             {activeTab === 'create-post' && (
               <div className="animate-in slide-in-from-bottom-4 duration-500">
                 <CreatePostForm />
@@ -89,19 +109,25 @@ export default function AdminDashboard() {
 
             {activeTab === 'posts' && (
               <div className="animate-in fade-in duration-500">
-                {/* 5. Pass the handleEditPost function to the list */}
+                {/* Pass the edit handler */}
                 <PostList onEdit={handleEditPost} />
               </div>
             )}
 
-            {/* 6. Render the Update Form when in 'update-post' mode */}
             {activeTab === 'update-post' && editingPostId && (
               <div className="animate-in slide-in-from-right-4 duration-500">
                 <UpdatePostForm 
                   postId={editingPostId} 
-                  onCancel={handleCancelEdit}
-                  onSuccess={handleCancelEdit}
+                  onCancel={handleCancelPostEdit}
+                  onSuccess={handleCancelPostEdit}
                 />
+              </div>
+            )}
+
+            {/* --- GD VIEWER --- */}
+            {activeTab === 'gd-viewer' && (
+              <div className="animate-in fade-in duration-500">
+                <AdminGDViewer />
               </div>
             )}
 
