@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { 
@@ -12,14 +12,15 @@ import {
   EyeOff 
 } from "lucide-react";
 
-export default function VisitingOfficerLogin() {
+// --- 1. THE LOGIC COMPONENT ---
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
 
   const [forceNumber, setForceNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State for visibility
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -91,7 +92,7 @@ export default function VisitingOfficerLogin() {
             </label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"} // Toggle type
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -136,5 +137,18 @@ export default function VisitingOfficerLogin() {
         </form>
       </div>
     </div>
+  );
+}
+
+// --- 2. EXPORTED PAGE WRAPPED IN SUSPENSE ---
+export default function VisitingOfficerLogin() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <Loader2 className="animate-spin text-slate-900" size={32} />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
