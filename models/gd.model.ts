@@ -88,6 +88,17 @@ const GeneralDiarySchema = new Schema(
       index: true,
     },
 
+    hasCorrections: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ✅ Tracks the total number of corrections made to this day's diary
+    correctionCount: {
+      type: Number,
+      default: 0,
+    },
+
     frozenAt: { type: Date, default: null },
     frozenBy: { type: Schema.Types.ObjectId, ref: "Officer", default: null },
     createdBy: { type: Schema.Types.ObjectId, ref: "Officer", required: true },
