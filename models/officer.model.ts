@@ -59,6 +59,14 @@ const officerSchema = new mongoose.Schema(
       trim: true,
     },
 
+    postCode: {
+      type: String,
+      required: [true, "Station Code is required"],
+      unique: true,
+      trim: true,
+      uppercase: true,
+    },
+
     postName: {
       type: String,
       required: true,
