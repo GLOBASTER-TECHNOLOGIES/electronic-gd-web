@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import dbConnect from "@/config/dbConnect";
 import Post from "@/models/post.model";
-import Officer from "@/models/officer.model"; // Assuming your Officer/User model is here
+import Officer from "@/models/officer.model";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,23 +15,27 @@ export async function POST(request: NextRequest) {
       division,
       contactNumber,
       address,
-      officerForceId, // <--- The Control Room inputs this (e.g., "98231")
+      officerForceId,
+      password, // ✅ NEW
     } = body;
 
-    // 1. Basic Validation
-    if (!postName || !postCode || !division) {
+    // 1️⃣ Basic Validation
+    if (!postName || !postCode || !division || !password) {
       return NextResponse.json(
         {
           success: false,
-          message: "Post Name, Code, and Division are required.",
+          message: "Post Name, Code, Division and Password are required.",
         },
         { status: 400 },
       );
     }
 
-    // 2. Check for Duplicate Post
+    // 2️⃣ Check for Duplicate Post
     const existingPost = await Post.findOne({
-      $or: [{ postCode: postCode }, { postName: postName }],
+      $or: [
+        { postCode: postCode.toUpperCase() },
+        { postName: postName.toUpperCase() },
+      ],
     });
 
     if (existingPost) {
@@ -43,11 +48,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Resolve Force ID to Officer Object ID
+    // 3️⃣ Resolve Officer Force ID → ObjectId
     let officerObjectId = null;
 
     if (officerForceId) {
-      // Find the officer by their visible Force ID
       const officer = await Officer.findOne({
         $or: [{ forceId: officerForceId }, { forceNumber: officerForceId }],
       });
@@ -56,31 +60,41 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: `Officer with Force ID '${officerForceId}' not found. Please verify the ID.`,
+            message: `Officer with Force ID '${officerForceId}' not found.`,
           },
           { status: 404 },
         );
       }
 
-      // If found, grab the internal _id
       officerObjectId = officer._id;
     }
 
-    // 4. Create the Post with the resolved ID
+    // 4️⃣ Hash Password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 5️⃣ Create Post
     const newPost = await Post.create({
-      postName,
-      postCode,
-      division,
+      postName: postName.toUpperCase(),
+      postCode: postCode.toUpperCase(),
+      division: division.toUpperCase(),
       contactNumber,
       address,
-      officerInCharge: officerObjectId, // Stores the MongoDB _id linked to that officer
+      officerInCharge: officerObjectId,
+      password: hashedPassword, // 🔐 Saved securely
+      lastPasswordChange: new Date(),
     });
 
     return NextResponse.json(
       {
         success: true,
         message: "RPF Post created successfully.",
-        data: newPost,
+        data: {
+          id: newPost._id,
+          postName: newPost.postName,
+          postCode: newPost.postCode,
+          division: newPost.division,
+          zone: newPost.zone,
+        },
       },
       { status: 201 },
     );
