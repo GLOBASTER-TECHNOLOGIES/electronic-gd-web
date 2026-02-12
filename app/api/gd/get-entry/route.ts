@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const post = searchParams.get("post");
+    const post = searchParams.get("post"); // OLD (kept for compatibility)
+    const postCode = searchParams.get("postCode"); // ✅ NEW (correct field)
     const dateParam = searchParams.get("date");
     const id = searchParams.get("id");
 
@@ -45,17 +46,6 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // ✅ Ensure signature always contains postCode field
-      if (gd.entries && Array.isArray(gd.entries)) {
-        gd.entries = gd.entries.map((entry: any) => ({
-          ...entry,
-          signature: {
-            ...entry.signature,
-            postCode: entry.signature?.postCode || "", // fallback
-          },
-        }));
-      }
-
       return NextResponse.json(
         { success: true, data: gd },
         { status: 200 }
@@ -63,28 +53,22 @@ export async function GET(request: NextRequest) {
     }
 
     // ====================================================
-    // CASE 2: FETCH BY POST + DATE (Officer View)
+    // CASE 2: FETCH BY POSTCODE + DATE (Post View)
     // ====================================================
-    if (post) {
+    if (postCode || post) {
       const targetDate = dateParam ? new Date(dateParam) : new Date();
       const queryDate = normalizeDiaryDate(targetDate);
 
+      const queryField = postCode
+        ? { postCode: postCode.toUpperCase() } // ✅ correct schema field
+        : { post: post }; // fallback for old usage
+
       const gd = await GeneralDiary.findOne({
-        post: post,
+        ...queryField,
         diaryDate: queryDate,
       })
         .select("-__v")
         .lean();
-
-      if (gd && gd.entries) {
-        gd.entries = gd.entries.map((entry: any) => ({
-          ...entry,
-          signature: {
-            ...entry.signature,
-            postCode: entry.signature?.postCode || "",
-          },
-        }));
-      }
 
       return NextResponse.json(
         { success: true, data: gd || null },
@@ -94,7 +78,6 @@ export async function GET(request: NextRequest) {
 
     // ====================================================
     // CASE 3: ADMIN OVERVIEW (Summary Only)
-    // No full entries returned
     // ====================================================
     const summaries = await GeneralDiary.aggregate([
       {
@@ -104,7 +87,8 @@ export async function GET(request: NextRequest) {
         $project: {
           _id: 1,
           division: 1,
-          post: 1,
+          postName: 1,       // ✅ Correct field
+          postCode: 1,       // ✅ Include postCode
           diaryDate: 1,
           pageSerialNo: 1,
           status: 1,
@@ -118,6 +102,7 @@ export async function GET(request: NextRequest) {
       { success: true, data: summaries },
       { status: 200 }
     );
+
   } catch (error) {
     console.error("Fetch GD Error:", error);
     return NextResponse.json(
