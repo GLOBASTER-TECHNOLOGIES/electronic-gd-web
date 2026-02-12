@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
+import Post from "@/models/post.model"; // ✅ Import Post Model
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -16,14 +17,14 @@ export async function POST(request: NextRequest) {
       appRole,
       railwayZone,
       division,
-      postName,
+      postCode, // ✅ We expect this from frontend now
       mobileNumber,
       password,
       createdBy,
     } = body;
 
     /* =========================
-       BASIC VALIDATION
+       1. BASIC VALIDATION
     ========================== */
     if (
       !forceNumber ||
@@ -32,18 +33,37 @@ export async function POST(request: NextRequest) {
       !appRole ||
       !railwayZone ||
       !division ||
-      !postName ||
+      !postCode || // Validating Code instead of Name
       !mobileNumber ||
       !password
     ) {
       return NextResponse.json(
-        { message: "All required fields must be provided" },
+        { message: "All required fields (including Post Code) must be provided" },
         { status: 400 }
       );
     }
 
     /* =========================
-       CHECK EXISTING OFFICER
+       2. RESOLVE POST NAME
+    ========================== */
+    // Find the post by the provided code
+    const targetPost = await Post.findOne({ 
+       // Search by postCode or generic code field to be safe
+       $or: [{ postCode: postCode }, { code: postCode }] 
+    });
+
+    if (!targetPost) {
+      return NextResponse.json(
+        { message: `Invalid Post Code: '${postCode}'. Station not found.` },
+        { status: 404 }
+      );
+    }
+
+    // Extract the official name
+    const resolvedPostName = targetPost.postName || targetPost.name || targetPost.stationName;
+
+    /* =========================
+       3. CHECK EXISTING OFFICER
     ========================== */
     const existingOfficer = await Officer.findOne({
       $or: [{ forceNumber }, { mobileNumber }],
@@ -57,13 +77,13 @@ export async function POST(request: NextRequest) {
     }
 
     /* =========================
-       HASH PASSWORD
+       4. HASH PASSWORD
     ========================== */
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     /* =========================
-       CREATE OFFICER
+       5. CREATE OFFICER
     ========================== */
     const officer = await Officer.create({
       forceNumber,
@@ -72,9 +92,13 @@ export async function POST(request: NextRequest) {
       appRole,
       railwayZone,
       division,
-      postName,
+      
+      // ✅ Save both Code (from input) and Name (from DB lookup)
+      postCode: targetPost.postCode, 
+      postName: resolvedPostName, 
+      
       mobileNumber,
-      password: hashedPassword, // hashed here
+      password: hashedPassword,
       createdBy: createdBy || null,
     });
 
@@ -82,14 +106,25 @@ export async function POST(request: NextRequest) {
       {
         message: "Officer registered successfully",
         officerId: officer._id,
+        postName: resolvedPostName // Send back name for UI confirmation
       },
       { status: 201 }
     );
-  } catch (error) {
+
+  } catch (error: any) {
     console.error("Officer Registration Error:", error);
+    
+    // Handle Duplicate Key Error (E11000) specifically
+    if (error.code === 11000) {
+        const field = Object.keys(error.keyPattern)[0];
+        return NextResponse.json(
+            { message: `Duplicate entry detected: ${field} already exists.` },
+            { status: 409 }
+        );
+    }
 
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { message: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
