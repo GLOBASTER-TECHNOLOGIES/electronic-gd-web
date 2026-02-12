@@ -1,54 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
-import Post from "@/models/post.model"; // ✅ Import Post Model
+import Post from "@/models/post.model";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-
     const body = await request.json();
 
     const {
-      forceNumber,
-      name,
-      rank,
-      appRole,
-      railwayZone,
-      division,
-      postCode, // ✅ We expect this from frontend now
-      mobileNumber,
-      password,
-      createdBy,
+      forceNumber, name, rank, appRole,
+      railwayZone, division, postCode, // We get Code from frontend
+      mobileNumber, password, createdBy,
     } = body;
 
-    /* =========================
-       1. BASIC VALIDATION
-    ========================== */
-    if (
-      !forceNumber ||
-      !name ||
-      !rank ||
-      !appRole ||
-      !railwayZone ||
-      !division ||
-      !postCode || // Validating Code instead of Name
-      !mobileNumber ||
-      !password
-    ) {
-      return NextResponse.json(
-        { message: "All required fields (including Post Code) must be provided" },
-        { status: 400 }
-      );
+    // 1. Validation
+    if (!forceNumber || !name || !postCode || !mobileNumber || !password) {
+      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
-    /* =========================
-       2. RESOLVE POST NAME
-    ========================== */
-    // Find the post by the provided code
+    // 2. FIND THE POST ID USING THE CODE
     const targetPost = await Post.findOne({ 
-       // Search by postCode or generic code field to be safe
        $or: [{ postCode: postCode }, { code: postCode }] 
     });
 
@@ -59,32 +32,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract the official name
-    const resolvedPostName = targetPost.postName || targetPost.name || targetPost.stationName;
-
-    /* =========================
-       3. CHECK EXISTING OFFICER
-    ========================== */
-    const existingOfficer = await Officer.findOne({
-      $or: [{ forceNumber }, { mobileNumber }],
-    });
-
-    if (existingOfficer) {
-      return NextResponse.json(
-        { message: "Officer already exists with this Force Number or Mobile" },
-        { status: 409 }
-      );
+    // 3. Check for existing officer
+    const existing = await Officer.findOne({ $or: [{ forceNumber }, { mobileNumber }] });
+    if (existing) {
+      return NextResponse.json({ message: "Officer already exists" }, { status: 409 });
     }
 
-    /* =========================
-       4. HASH PASSWORD
-    ========================== */
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // 4. Hash Password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    /* =========================
-       5. CREATE OFFICER
-    ========================== */
+    // 5. CREATE OFFICER (With postId)
     const officer = await Officer.create({
       forceNumber,
       name,
@@ -93,39 +50,24 @@ export async function POST(request: NextRequest) {
       railwayZone,
       division,
       
-      // ✅ Save both Code (from input) and Name (from DB lookup)
-      postCode: targetPost.postCode, 
-      postName: resolvedPostName, 
+      // ✅ LINKING THE ID
+      postId: targetPost._id, 
+      
+      // Keeping these for quick access
+      postCode: targetPost.postCode || postCode,
+      postName: targetPost.postName || targetPost.name,
       
       mobileNumber,
       password: hashedPassword,
       createdBy: createdBy || null,
     });
 
-    return NextResponse.json(
-      {
-        message: "Officer registered successfully",
-        officerId: officer._id,
-        postName: resolvedPostName // Send back name for UI confirmation
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ 
+        message: "Officer registered successfully", 
+        officerId: officer._id 
+    }, { status: 201 });
 
   } catch (error: any) {
-    console.error("Officer Registration Error:", error);
-    
-    // Handle Duplicate Key Error (E11000) specifically
-    if (error.code === 11000) {
-        const field = Object.keys(error.keyPattern)[0];
-        return NextResponse.json(
-            { message: `Duplicate entry detected: ${field} already exists.` },
-            { status: 409 }
-        );
-    }
-
-    return NextResponse.json(
-      { message: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
