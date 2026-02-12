@@ -11,8 +11,9 @@ import {
   Loader2,
   TrainFront,
   UserSquare2,
-  Edit, // Added icon
-  Settings // Added icon
+  Edit, 
+  Settings,
+  Hash // 1. Added Hash icon for the Post Code
 } from "lucide-react";
 
 interface Post {
@@ -29,13 +30,12 @@ interface Post {
   } | null;
 }
 
-// 1. Add props interface
 interface PostListProps {
   onEdit?: (id: string) => void; 
 }
 
-// 2. Accept the prop
 export default function PostList({ onEdit }: PostListProps) {
+  // ... (State and Fetch logic remains exactly the same as your code) ...
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,7 +58,6 @@ export default function PostList({ onEdit }: PostListProps) {
     }
   };
 
-  // Filter Logic
   const divisions = ["ALL", ...Array.from(new Set(posts.map(p => p.division)))];
   
   const filteredPosts = posts.filter(post => {
@@ -72,8 +71,7 @@ export default function PostList({ onEdit }: PostListProps) {
 
   return (
     <div className="space-y-6">
-      
-      {/* HEADER & STATS */}
+      {/* HEADER & STATS (Same as before) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard 
           label="Total Stations" 
@@ -92,7 +90,7 @@ export default function PostList({ onEdit }: PostListProps) {
         />
       </div>
 
-      {/* FILTERS */}
+      {/* FILTERS (Same as before) */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
@@ -132,7 +130,6 @@ export default function PostList({ onEdit }: PostListProps) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPosts.map((post) => (
-            // 3. Pass onEdit to PostCard
             <PostCard key={post._id} post={post} onEdit={onEdit} />
           ))}
         </div>
@@ -154,7 +151,6 @@ function StatCard({ label, value, icon }: { label: string, value: number, icon: 
   );
 }
 
-// 4. Update PostCard props
 function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void }) {
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
@@ -163,6 +159,7 @@ function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void 
       <div className="p-5 border-b border-slate-50 bg-slate-50/50 flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-1">
+            {/* Kept the badge here as well for quick scanning */}
             <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wide">
               {post.postCode}
             </span>
@@ -189,6 +186,18 @@ function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void 
 
       {/* CARD BODY */}
       <div className="p-5 space-y-4 flex-1">
+        
+        {/* 2. Added Post Code Section explicitly */}
+        <div className="flex items-start gap-3">
+          <Hash size={16} className="text-slate-400 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-slate-400 uppercase">Post Code</p>
+            <p className="text-sm font-medium text-slate-700 font-mono">
+              {post.postCode}
+            </p>
+          </div>
+        </div>
+
         <div className="flex items-start gap-3">
           <Phone size={16} className="text-slate-400 mt-0.5 shrink-0" />
           <div>
@@ -209,7 +218,7 @@ function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void 
         </div>
       </div>
 
-      {/* CARD FOOTER */}
+      {/* CARD FOOTER (Same as before) */}
       <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${post.officerInCharge ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-400'}`}>
           {post.officerInCharge ? <UserSquare2 size={16} /> : "?"}
@@ -223,14 +232,13 @@ function PostCard({ post, onEdit }: { post: Post, onEdit?: (id: string) => void 
           </p>
         </div>
         
-        {/* Mobile-friendly Edit link (optional secondary button) */}
         {onEdit && (
-           <button 
-             onClick={() => onEdit(post._id)}
-             className="text-[10px] font-bold text-blue-600 hover:underline uppercase md:hidden"
-           >
-             Edit
-           </button>
+            <button 
+              onClick={() => onEdit(post._id)}
+              className="text-[10px] font-bold text-blue-600 hover:underline uppercase md:hidden"
+            >
+              Edit
+            </button>
         )}
       </div>
     </div>
