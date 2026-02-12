@@ -19,13 +19,15 @@ export async function PATCH(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
-    const { post, pageSerialNo } = body;
+    const { postCode, pageSerialNo } = body;
+    console.log("req came");
+    console.log(postCode, pageSerialNo)
 
     // 1. Basic Validation
-    if (!post || pageSerialNo === undefined) {
+    if (!postCode || pageSerialNo === undefined) {
       return NextResponse.json(
         { success: false, message: "Missing required fields." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,27 +36,32 @@ export async function PATCH(request: NextRequest) {
     const today = normalizeDiaryDate();
 
     // 3. Find today's register only
-    const existingGD = await GeneralDiary.findOne({ post, diaryDate: today });
+    const existingGD = await GeneralDiary.findOne({ postCode, diaryDate: today });
 
     if (!existingGD) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: "Today's General Diary has not been opened yet. Previous days cannot be updated." 
+        {
+          success: false,
+          message:
+            "Today's General Diary has not been opened yet. Previous days cannot be updated.",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // 4. One-Time Update Enforcement
     // Prevents overwriting once a serial number is already authenticated
-    if (existingGD.pageSerialNo !== 0 && existingGD.pageSerialNo !== undefined) {
+    if (
+      existingGD.pageSerialNo !== 0 &&
+      existingGD.pageSerialNo !== undefined
+    ) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: "The Serial Number has already been authenticated. Further updates are prohibited." 
+        {
+          success: false,
+          message:
+            "The Serial Number has already been authenticated. Further updates are prohibited.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -63,14 +70,13 @@ export async function PATCH(request: NextRequest) {
     await existingGD.save();
 
     return NextResponse.json(
-      { 
-        success: true, 
-        message: "Official Serial Number locked for today's register.", 
-        data: { pageSerialNo: existingGD.pageSerialNo } 
+      {
+        success: true,
+        message: "Official Serial Number locked for today's register.",
+        data: { pageSerialNo: existingGD.pageSerialNo },
       },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error: any) {
     console.error("Lock Serial Error:", error);
 
@@ -84,7 +90,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
