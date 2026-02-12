@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔍 Find Post (include password manually because select:false)
-    const post = await Post.findOne({ postCode: postCode.toUpperCase() }).select("+password +refreshToken");
+    const post = await Post.findOne({
+      postCode: postCode.toUpperCase(),
+    }).select("+password +refreshToken");
 
     if (!post) {
       return NextResponse.json(
@@ -30,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 🔑 Compare password
     const isMatch = await bcrypt.compare(password, post.password);
     if (!isMatch) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     // 🎟️ Generate Access Token
     const accessToken = jwt.sign(
-      { id: post._id, role: "POST" }, // role fixed for post login
+      { id: post._id, role: "POST" },
       ACCESS_SECRET,
       { expiresIn: "15m" }
     );
@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    // 💾 Save refresh token + login time
     post.refreshToken = refreshToken;
     post.lastLoginAt = new Date();
     await post.save();
@@ -69,8 +68,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 🍪 HTTP-ONLY COOKIES
-    res.cookies.set("accessToken", accessToken, {
+    // 🍪 Updated Cookie Names
+    res.cookies.set("postAccessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -78,7 +77,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 15,
     });
 
-    res.cookies.set("refreshToken", refreshToken, {
+    res.cookies.set("postRefreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
