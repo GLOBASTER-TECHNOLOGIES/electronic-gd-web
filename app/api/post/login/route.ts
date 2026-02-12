@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     await post.save();
 
     const res = NextResponse.json({
+      success: true,
       message: "Post login successful",
       post: {
         id: post._id,
