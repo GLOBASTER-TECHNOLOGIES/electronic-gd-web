@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/config/dbConnect";
 import GeneralDiary from "@/models/gd.model";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 /* =========================
    Helper: True IST Midnight
@@ -18,6 +19,53 @@ export async function POST(request: NextRequest) {
   try {
     await dbConnect();
 
+    /* =========================
+       🔐 1️⃣ Validate Post Session (MANDATORY)
+    ========================= */
+    const postToken = request.cookies.get("postAccessToken")?.value;
+
+    if (!postToken) {
+      return NextResponse.json(
+        { message: "Post session required" },
+        { status: 401 }
+      );
+    }
+
+    let postPayload: any;
+    try {
+      postPayload = jwt.verify(
+        postToken,
+        process.env.JWT_ACCESS_SECRET!
+      );
+    } catch {
+      return NextResponse.json(
+        { message: "Invalid post session" },
+        { status: 401 }
+      );
+    }
+
+    /* =========================
+       🔐 2️⃣ Check Visiting Session (OPTIONAL)
+    ========================= */
+    const visitingToken =
+      request.cookies.get("visitingAccessToken")?.value;
+
+    let visitingPayload: any = null;
+
+    if (visitingToken) {
+      try {
+        visitingPayload = jwt.verify(
+          visitingToken,
+          process.env.JWT_VISITING_SECRET!
+        );
+      } catch {
+        return NextResponse.json(
+          { message: "Invalid visiting session" },
+          { status: 401 }
+        );
+      }
+    }
+
     const {
       division,
       post,
@@ -30,39 +78,52 @@ export async function POST(request: NextRequest) {
       timeOfSubmission,
     } = await request.json();
 
-    // 1. Validation
+    // 3. Validation
     if (
       !division ||
       !post ||
       !abstract ||
       !details ||
-      !officerId ||
       !timeOfSubmission
     ) {
       return NextResponse.json(
         { message: "Required fields missing" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const today = normalizeDiaryDate();
 
-    // 2. Find Existing GD
+    // 4. Find Existing GD
     const gd = await GeneralDiary.findOne({ post, diaryDate: today });
 
-    // 🛑 STOP: If GD doesn't exist, fail immediately.
     if (!gd) {
       return NextResponse.json(
         {
           message:
             "General Diary for today has not been opened yet. Please open the GD first.",
         },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
-    // 3. Add Entry (Only if GD exists)
     const nextEntryNo = (gd.lastEntryNo || 0) + 1;
+
+    /* =========================
+       🧠 5️⃣ Determine Signature Source
+    ========================= */
+    let finalOfficerId = officerId;
+    let finalOfficerName = officerName;
+    let finalRank = rank;
+    let finalForceNumber = forceNumber;
+
+    // 🔥 If visiting session exists → override everything
+    if (visitingPayload) {
+      finalOfficerId = visitingPayload.id;
+      finalOfficerName = visitingPayload.officerName;
+      finalRank = visitingPayload.rank;
+      finalForceNumber = visitingPayload.forceNumber;
+    }
 
     const entry = {
       entryNo: nextEntryNo,
@@ -71,11 +132,11 @@ export async function POST(request: NextRequest) {
       abstract,
       details,
       signature: {
-        officerId: new mongoose.Types.ObjectId(officerId),
-        officerName,
-        rank,
-        forceNumber,
-        post: post, // Saved correctly
+        officerId: new mongoose.Types.ObjectId(finalOfficerId),
+        officerName: finalOfficerName,
+        rank: finalRank,
+        forceNumber: finalForceNumber,
+        post: post,
         signedAt: new Date(),
       },
     };
@@ -87,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { message: "GD entry added successfully", entryNo: nextEntryNo },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error: any) {
     console.error("GD Entry Error:", error);
@@ -95,13 +156,13 @@ export async function POST(request: NextRequest) {
     if (error.name === "VersionError") {
       return NextResponse.json(
         { message: "Concurrency conflict. Please try again." },
-        { status: 409 },
+        { status: 409 }
       );
     }
 
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
