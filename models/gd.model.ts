@@ -49,6 +49,13 @@ const GeneralDiarySchema = new Schema(
       trim: true,
     },
 
+    postId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post", // Links to your 'Post' model
+      required: true,
+      index: true, // Speeds up queries like "Find all officers in this Post"
+    },
+
     // ✅ THE LOGICAL ID (Use this for searching)
     postCode: {
       type: String,
