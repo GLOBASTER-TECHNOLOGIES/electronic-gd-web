@@ -22,6 +22,23 @@ import {
 
 // ... Interfaces remain the same ...
 
+interface Officer {
+  _id: string;
+  name: string;
+  rank: string;
+  forceNumber: string;
+}
+
+interface Post {
+  _id: string;
+  postName: string;
+  postCode: string;
+  division: string;
+  contactNumber?: string;
+  address: string;
+  officerInCharge?: Officer;
+}
+
 export default function PostsDashboard() {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
