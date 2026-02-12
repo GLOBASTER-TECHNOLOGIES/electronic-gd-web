@@ -60,17 +60,27 @@ export default function SingleGDViewPage() {
 
         const safeGD = {
             ...gd,
-            post: gd.post || gd.postName, // ✅ ensure compatibility
+            // Header still needs a value (Station Name or Code)
+            post: gd.post || gd.postName,
+
             entries: gd.entries.map((entry) => ({
                 ...entry,
                 abstract: entry.abstract ?? "",
                 details: entry.details ?? "",
+
+                signature: {
+                    ...entry.signature,
+                    // 🔥 FIX: Directly use the Post Code. 
+                    // If code is missing, fallback to the name, otherwise empty string.
+                    post: entry.signature.postCode || entry.signature.post || "",
+
+                    postCode: entry.signature.postCode
+                }
             })),
         };
 
         generateGDPDF(safeGD);
     };
-
 
     if (loading)
         return (
