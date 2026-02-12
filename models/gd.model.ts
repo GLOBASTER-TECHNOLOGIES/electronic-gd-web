@@ -21,9 +21,9 @@ const EntrySchema = new Schema(
         ref: "Officer",
         required: true,
       },
-      officerName: String,
-      rank: String,
-      forceNumber: String,
+      officerName: { type: String, required: true },
+      rank: { type: String, required: true },
+      forceNumber: { type: String, required: true },
 
       // ✅ STORE BOTH HERE TOO (For historical accuracy)
       postCode: { type: String, required: true },
