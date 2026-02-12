@@ -1,19 +1,19 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
-    ArrowLeft, 
-    FileText, 
-    Shield, 
-    CheckCircle, 
-    AlertCircle, 
-    Loader2, 
-    Lock 
+import {
+    ArrowLeft,
+    FileText,
+    Shield,
+    CheckCircle,
+    AlertCircle,
+    Loader2,
+    Lock
 } from "lucide-react";
 
-export default function UpdateSerialPage() {
+// --- 1. THE MAIN LOGIC COMPONENT ---
+function UpdateSerialForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const postId = searchParams.get("id");
@@ -77,7 +77,6 @@ export default function UpdateSerialPage() {
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
-            
             {/* COMPACT NAV */}
             <div className="bg-slate-900 text-white p-4">
                 <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -96,7 +95,6 @@ export default function UpdateSerialPage() {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        
                         {/* STATION INFO - FLAT LIST */}
                         <div className="border-b border-slate-100 pb-6 flex justify-between items-end">
                             <div>
@@ -119,35 +117,32 @@ export default function UpdateSerialPage() {
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
                                     Official Page Serial Number
                                 </label>
-                                <input 
+                                <input
                                     type="number"
                                     required
                                     disabled={isLocked}
                                     value={newSerial}
                                     onChange={(e) => setNewSerial(e.target.value)}
                                     placeholder="0000000"
-                                    className={`w-full p-4 text-xl font-bold border rounded-lg focus:outline-none transition-all ${
-                                        isLocked ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 focus:border-slate-900"
-                                    }`}
+                                    className={`w-full p-4 text-xl font-bold border rounded-lg focus:outline-none transition-all ${isLocked ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-200 focus:border-slate-900"
+                                        }`}
                                 />
                             </div>
 
                             {message && (
-                                <p className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded ${
-                                    message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
-                                }`}>
+                                <p className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                                    }`}>
                                     {message.text}
                                 </p>
                             )}
 
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={updating || isLocked}
-                                className={`w-full p-4 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${
-                                    isLocked 
-                                    ? "bg-slate-100 text-slate-300" 
-                                    : "bg-slate-900 text-white hover:bg-black"
-                                }`}
+                                className={`w-full p-4 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all ${isLocked
+                                        ? "bg-slate-100 text-slate-300"
+                                        : "bg-slate-900 text-white hover:bg-black"
+                                    }`}
                             >
                                 {isLocked ? <><Lock size={14} /> Record Authenticated</> : updating ? "Processing..." : "Update Serial No."}
                             </button>
@@ -160,5 +155,18 @@ export default function UpdateSerialPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// --- 2. THE EXPORTED PAGE WITH SUSPENSE BOUNDARY ---
+export default function UpdateSerialPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <Loader2 className="animate-spin text-slate-900" size={32} />
+            </div>
+        }>
+            <UpdateSerialForm />
+        </Suspense>
     );
 }
