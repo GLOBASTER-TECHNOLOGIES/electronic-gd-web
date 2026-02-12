@@ -81,7 +81,9 @@ const GeneralDiarySchema = new Schema(
 
     pageSerialNo: {
       type: Number,
-      unique: true,
+      unique: true, // Enforces uniqueness for numbers like 101, 102...
+      sparse: true, // ✅ ALLOWS multiple documents to be null/undefined
+      default: undefined, // undefined is safer than null for sparse indexes
     },
 
     entries: { type: [EntrySchema], default: [] },
