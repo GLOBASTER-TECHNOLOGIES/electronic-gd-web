@@ -85,12 +85,19 @@ export default function SingleGDViewPage() {
   const handleDownloadPDF = () => {
     if (!gd) return;
 
+    // We map the fields here so they match the PDF generator's "GDData" interface
     const safeGD = {
       ...gd,
+      post: gd.postName || gd.postCode, // 🔥 Maps your API field to what the generator expects
       entries: gd.entries.map((entry) => ({
         ...entry,
         abstract: entry.abstract ?? "",
         details: entry.details ?? "",
+        signature: {
+          ...entry.signature,
+          // Ensure post is set for the signature block in the PDF
+          post: entry.signature.postCode || gd.postCode
+        }
       })),
     };
 
