@@ -3,16 +3,13 @@ import dbConnect from "@/config/dbConnect";
 import GeneralDiary from "@/models/gd.model";
 import Officer from "@/models/officer.model";
 import Post from "@/models/post.model";
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
 export async function POST(request: NextRequest) {
   await dbConnect();
 
   try {
-    /* ==========================================
-       🔐 1. Token Extraction
-    ========================================== */
+    // 1. Token Extraction
     const postToken = request.cookies.get("postAccessToken")?.value;
     const postRefresh = request.cookies.get("postRefreshToken")?.value;
     const officerToken = request.cookies.get("officerAccessToken")?.value;
@@ -21,36 +18,22 @@ export async function POST(request: NextRequest) {
     let signaturePayload: any = null;
     let actorType: "POST" | "OFFICER" = "OFFICER";
     let primaryPayload: any = null;
-
-    // We need to store the Signer's Home Info specifically
     let signerPostCode = "";
     let signerPostName = "";
 
-    /* ==========================================
-       🛡️ 2. Dual-Case Logic Enforcement
-    ========================================== */
-
-    // CASE A: VISITING OFFICER (Station Context)
+    // 2. Dual-Case Logic (Visiting vs Native)
     if (postToken && postRefresh && visitingToken) {
+      // CASE A: Visiting Officer
       try {
-        // 1. Identify the Station (Where the entry is happening)
         primaryPayload = jwt.verify(postToken, process.env.JWT_ACCESS_SECRET!);
         actorType = "POST";
-
-        // 2. Identify the Visiting Officer (Who is signing)
         const visitingPayload: any = jwt.verify(
           visitingToken,
           process.env.JWT_VISITING_SECRET!,
         );
 
-        // FETCH VISITING OFFICER DETAILS
-        // (Crucial: To get their home post code, not the station's code)
         const visitingOfficerDoc = await Officer.findById(visitingPayload.id);
-        if (!visitingOfficerDoc)
-          return NextResponse.json(
-            { message: "Visiting Officer not found" },
-            { status: 404 },
-          );
+        if (!visitingOfficerDoc) throw new Error("Visiting Officer not found");
 
         signaturePayload = {
           id: visitingOfficerDoc._id,
@@ -58,34 +41,23 @@ export async function POST(request: NextRequest) {
           rank: visitingOfficerDoc.rank,
           forceNumber: visitingOfficerDoc.forceNumber,
         };
-
-        // ✅ Set Signer's Home Post Code
         signerPostCode = visitingOfficerDoc.postCode;
-        // Optional: You might need to fetch the postName for the officer's home code if not stored in Officer model
-        // Assuming Officer model might not have postName, or we leave it blank/fetch it separately.
-        // For now, let's use the code.
         signerPostName = "Visiting from " + visitingOfficerDoc.postCode;
       } catch (err) {
         return NextResponse.json(
-          { message: "Station or Visiting session expired." },
+          { message: "Session expired." },
           { status: 401 },
         );
       }
-    }
-    // CASE B: NATIVE OFFICER (Individual Context)
-    else if (officerToken && !visitingToken) {
+    } else if (officerToken && !visitingToken) {
+      // CASE B: Native Officer
       try {
         primaryPayload = jwt.verify(
           officerToken,
           process.env.JWT_ACCESS_SECRET!,
         );
-
         const officerDoc = await Officer.findById(primaryPayload.id);
-        if (!officerDoc)
-          return NextResponse.json(
-            { message: "Officer not found" },
-            { status: 404 },
-          );
+        if (!officerDoc) throw new Error("Officer not found");
 
         signaturePayload = {
           id: officerDoc._id,
@@ -94,10 +66,7 @@ export async function POST(request: NextRequest) {
           forceNumber: officerDoc.forceNumber,
         };
         actorType = "OFFICER";
-
-        // ✅ Set Signer's Home Post Code (Same as current location for native)
         signerPostCode = officerDoc.postCode;
-        // We can fill postName later from the station doc if it matches
       } catch (err) {
         return NextResponse.json(
           { message: "Officer session expired." },
@@ -105,40 +74,31 @@ export async function POST(request: NextRequest) {
         );
       }
     } else {
-      return NextResponse.json(
-        { message: "Access Denied: Invalid token combination." },
-        { status: 403 },
-      );
+      return NextResponse.json({ message: "Access Denied." }, { status: 403 });
     }
 
-    /* ==========================================
-       🏢 3. Fetch Post Context (Where entry is saved)
-    ========================================== */
+    // 3. Fetch Station Context
     let postDoc = null;
     if (actorType === "POST") {
       postDoc = await Post.findById(primaryPayload.id);
     } else {
-      // For Native Officer, find the post they belong to
       postDoc = await Post.findOne({ postCode: signerPostCode });
     }
 
     if (!postDoc)
       return NextResponse.json(
-        { message: "Station terminal not found." },
+        { message: "Station not found." },
         { status: 400 },
       );
 
-    const targetPostCode = postDoc.postCode; // The Station we are physically at
+    const targetPostCode = postDoc.postCode;
     const targetPostName = postDoc.postName;
 
-    // For Native officers, update the signerPostName now that we have the Post Doc
     if (actorType === "OFFICER" || signerPostCode === targetPostCode) {
       signerPostName = targetPostName;
     }
 
-    /* ==========================================
-       📦 4. Save Entry
-    ========================================== */
+    // 4. Prepare Entry
     const body = await request.json();
     const { abstract, details, timeOfSubmission, division } = body;
 
@@ -147,32 +107,22 @@ export async function POST(request: NextRequest) {
       officerName: signaturePayload.officerName,
       rank: signaturePayload.rank,
       forceNumber: signaturePayload.forceNumber,
-
-      // ✅ CHANGED: Now using the Officer's Home Post Code
-      postCode: signerPostCode,
-      postName: signerPostName, // e.g. "Visiting from [Code]" or Actual Name
-
+      postCode: signerPostCode, // ✅ Correctly stores signer's home post
+      postName: signerPostName,
       signedAt: new Date(),
     };
 
-    const entry = {
-      entryNo: 0,
-      entryTime: new Date(),
-      timeOfSubmission: new Date(timeOfSubmission),
-      abstract,
-      details,
-      signature,
-    };
-
-    // IST Date snap to midnight
+    // 5. Calculate Date Boundaries
     const istDate = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
     istDate.setUTCHours(0, 0, 0, 0);
     const startOfDay = new Date(istDate.getTime() - 5.5 * 60 * 60 * 1000);
 
-    // 🔴 IMPORTANT: We still query using targetPostCode (Current Station)
-    // because the entry must live in THIS station's diary.
+    // 6. DB Operation (Fixed Query)
     const gd = await GeneralDiary.findOneAndUpdate(
-      { postCode: targetPostCode, diaryDate: startOfDay },
+      {
+        postCode: targetPostCode, // ✅ STRICTLY using postCode
+        diaryDate: startOfDay,
+      },
       {
         $inc: { lastEntryNo: 1 },
         $setOnInsert: {
@@ -180,15 +130,25 @@ export async function POST(request: NextRequest) {
           division: division || postDoc.division || "N/A",
           createdBy: primaryPayload.id,
           status: "ACTIVE",
+          // Mongoose defaults will handle pageSerialNo
         },
       },
       { upsert: true, new: true },
     );
 
-    entry.entryNo = gd.lastEntryNo;
+    const entry = {
+      entryNo: gd.lastEntryNo,
+      entryTime: new Date(),
+      timeOfSubmission: new Date(timeOfSubmission),
+      abstract,
+      details,
+      signature,
+    };
+
     gd.entries.push(entry);
     await gd.save();
 
+    // 7. Cleanup & Response
     const response = NextResponse.json({
       success: true,
       message: "Entry recorded",
@@ -202,6 +162,13 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error: any) {
     console.error("GD Error:", error.message);
+    // Handle specific duplicate key errors gracefully if they ever happen again
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { message: "Concurrency Error: Please try again." },
+        { status: 409 },
+      );
+    }
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
