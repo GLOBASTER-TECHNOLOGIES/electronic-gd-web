@@ -1,4 +1,4 @@
-// gd.model.js (Improved & Scalable)
+// gd.model.js
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
@@ -7,35 +7,14 @@ const { Schema } = mongoose;
 ========================= */
 const EntrySchema = new Schema(
   {
-    entryNo: {
-      type: Number,
-      required: true, // Serial number within the GD
-    },
-
-    entryTime: {
-      type: Date,
-      required: true, // Actual time of entry
-      default: Date.now,
-    },
-
-    timeOfSubmission: {
-      type: Date,
-      required: true, // Actual time user clicked submit (from frontend)
-    },
-
-    abstract: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    details: {
-      type: String,
-      required: true,
-      trim: true, // Current valid text only
-    },
+    entryNo: { type: Number, required: true },
+    entryTime: { type: Date, required: true, default: Date.now },
+    timeOfSubmission: { type: Date, required: true },
+    abstract: { type: String, required: true, trim: true },
+    details: { type: String, required: true, trim: true },
 
     /* ===== SIGNATURE SNAPSHOT ===== */
+    // Snapshots the officer AND the post details at the moment of signing
     signature: {
       officerId: {
         type: Schema.Types.ObjectId,
@@ -45,26 +24,17 @@ const EntrySchema = new Schema(
       officerName: String,
       rank: String,
       forceNumber: String,
-      post: {
-        type: String,
-        required: true,
-        default: "ENTRY_BEFORE_POST_ADDED", // <--- ADD THIS DEFAULT
-      },
-      signedAt: {
-        type: Date,
-        default: Date.now,
-      },
+
+      // ✅ STORE BOTH HERE TOO (For historical accuracy)
+      postCode: { type: String, required: true },
+      postName: { type: String, required: true },
+
+      signedAt: { type: Date, default: Date.now },
     },
 
-    /* ===== CORRECTION FLAG ===== */
-    isCorrected: {
-      type: Boolean,
-      default: false,
-    },
+    isCorrected: { type: Boolean, default: false },
   },
-  {
-    _id: true, // Needed to link with CorrectionLog
-  },
+  { _id: true },
 );
 
 /* =========================
@@ -72,14 +42,24 @@ const EntrySchema = new Schema(
 ========================= */
 const GeneralDiarySchema = new Schema(
   {
-    /* ===== LOCATION ===== */
+    /* ===== LOCATION IDENTIFIERS ===== */
     division: {
       type: String,
       required: true,
       trim: true,
     },
 
-    post: {
+    // ✅ THE LOGICAL ID (Use this for searching)
+    postCode: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true, // e.g., "NDLS-MAIN"
+      index: true,
+    },
+
+    // ✅ THE DISPLAY NAME (Use this for UI)
+    postName: {
       type: String,
       required: true,
       trim: true,
@@ -88,23 +68,17 @@ const GeneralDiarySchema = new Schema(
     /* ===== DATE CONTROL ===== */
     diaryDate: {
       type: Date,
-      required: true, // Represents the GD day (00:00–23:59)
+      required: true,
       index: true,
     },
 
     pageSerialNo: {
       type: Number,
-      required: true, // Physical register continuity
       unique: true,
     },
 
-    /* ===== ENTRIES ===== */
-    entries: {
-      type: [EntrySchema],
-      default: [],
-    },
+    entries: { type: [EntrySchema], default: [] },
 
-    /* ===== STATUS & FREEZE CONTROL ===== */
     status: {
       type: String,
       enum: ["ACTIVE", "CORRECTION_WINDOW", "FROZEN"],
@@ -112,39 +86,20 @@ const GeneralDiarySchema = new Schema(
       index: true,
     },
 
-    frozenAt: {
-      type: Date,
-      default: null,
-    },
-
-    frozenBy: {
-      type: Schema.Types.ObjectId,
-      ref: "Officer",
-      default: null,
-    },
-
-    /* ===== AUDIT ===== */
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: "Officer",
-      required: true,
-    },
-
-    lastEntryNo: {
-      type: Number,
-      default: 0,
-    },
+    frozenAt: { type: Date, default: null },
+    frozenBy: { type: Schema.Types.ObjectId, ref: "Officer", default: null },
+    createdBy: { type: Schema.Types.ObjectId, ref: "Officer", required: true },
+    lastEntryNo: { type: Number, default: 0 },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 /* =========================
-   INDEXES (IMPORTANT)
+   INDEXES (CRITICAL UPDATE)
 ========================= */
-// One GD per post per day
-GeneralDiarySchema.index({ post: 1, diaryDate: 1 }, { unique: true });
+// ✅ Enforce uniqueness based on POST CODE + DATE
+// This prevents two GDs for "NDLS-MAIN" on the same day.
+GeneralDiarySchema.index({ postCode: 1, diaryDate: 1 }, { unique: true });
 
 export default mongoose.models.GeneralDiary ||
   mongoose.model("GeneralDiary", GeneralDiarySchema);
