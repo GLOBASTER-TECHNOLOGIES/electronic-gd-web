@@ -16,7 +16,7 @@ import {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = "/gd/add-entry";
 
   const [forceNumber, setForceNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +36,7 @@ function LoginForm() {
         { withCredentials: true }
       );
 
-      router.replace(redirectTo);
+      router.replace("/gd/add-entry");
 
     } catch (err: any) {
       setError(
@@ -47,6 +47,7 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
 
 
   return (
