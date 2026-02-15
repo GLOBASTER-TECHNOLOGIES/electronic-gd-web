@@ -31,25 +31,20 @@ export async function GET(request: NextRequest) {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
           { success: false, message: "Invalid ID" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
-      const gd = await GeneralDiary.findById(id)
-        .select("-__v")
-        .lean();
+      const gd = await GeneralDiary.findById(id).select("-__v").lean();
 
       if (!gd) {
         return NextResponse.json(
           { success: false, message: "GD Not Found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
-      return NextResponse.json(
-        { success: true, data: gd },
-        { status: 200 }
-      );
+      return NextResponse.json({ success: true, data: gd }, { status: 200 });
     }
 
     // ====================================================
@@ -72,7 +67,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(
         { success: true, data: gd || null },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -87,27 +82,26 @@ export async function GET(request: NextRequest) {
         $project: {
           _id: 1,
           division: 1,
-          postName: 1,       // ✅ Correct field
-          postCode: 1,       // ✅ Include postCode
+          postName: 1, // ✅ Correct field
+          postCode: 1, // ✅ Include postCode
           diaryDate: 1,
           pageSerialNo: 1,
+          hasCorrections: 1,
           status: 1,
           updatedAt: 1,
           entryCount: { $size: "$entries" },
         },
       },
     ]);
-
     return NextResponse.json(
       { success: true, data: summaries },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
     console.error("Fetch GD Error:", error);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
