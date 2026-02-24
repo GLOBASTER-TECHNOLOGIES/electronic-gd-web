@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Loader2, Shield, Clock, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, Shield, Clock, ExternalLink, AlertTriangle, Pen } from "lucide-react";
 
 // --- Types ---
 interface GDRegister {
@@ -13,13 +13,12 @@ interface GDRegister {
   diaryDate: string;
   pageSerialNo: number;
   entryCount: number;
-  hasCorrections: boolean; // ✅ Added field
+  hasCorrections: boolean;
 }
 
 export default function AdminGDViewer() {
   const router = useRouter();
   const [gds, setGds] = useState<GDRegister[]>([]);
-  console.log(gds)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +40,11 @@ export default function AdminGDViewer() {
     router.push(`/admin/gd/${id}`);
   };
 
+  // ✅ New Global Correction Handler
+  const handleGlobalCorrection = () => {
+    router.push("/admin/gd/update/");
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -57,9 +61,21 @@ export default function AdminGDViewer() {
           <h2 className="text-2xl font-black uppercase tracking-tight">Master GD Viewer</h2>
           <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Real-time Station Monitoring</p>
         </div>
-        <div className="text-right">
-          <span className="text-xs font-bold text-gray-400 uppercase block">Total Registers</span>
-          <span className="text-2xl font-black">{gds.length}</span>
+
+        <div className="flex items-center gap-8">
+          {/* ✅ Global Make Correction Button */}
+          <button
+            onClick={handleGlobalCorrection}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 hover:text-black transition-colors shadow-sm"
+          >
+            <Pen size={14} /> Make Correction
+          </button>
+
+          {/* Stats */}
+          <div className="text-right">
+            <span className="text-xs font-bold text-gray-400 uppercase block">Total Registers</span>
+            <span className="text-2xl font-black">{gds.length}</span>
+          </div>
         </div>
       </div>
 
@@ -91,7 +107,7 @@ export default function AdminGDViewer() {
                       {gd.division}
                     </span>
 
-                    {/* ✅ Corrections Indicator */}
+                    {/* Corrections Indicator */}
                     {gd.hasCorrections && (
                       <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-widest rounded">
                         <AlertTriangle size={10} /> Edited
@@ -113,7 +129,7 @@ export default function AdminGDViewer() {
                 </div>
               </div>
 
-              {/* Actions Area */}
+              {/* Actions Area - Single Button Only */}
               <div>
                 <button
                   onClick={() => handleViewFull(gd._id)}
