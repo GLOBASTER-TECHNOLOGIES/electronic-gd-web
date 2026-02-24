@@ -34,7 +34,8 @@ export default function LoginPage() {
       : { forceNumber: userId.trim(), password };
 
     // ✅ Match the dashboard paths defined in your middleware
-    const redirectPath = isPostLogin ? "/post/dashboard" : "/gd/add-entry";
+    const redirectPath = isPostLogin ? "/post/dashboard" : "/officer/profile";
+    // const redirectPath = isPostLogin ? "/post/dashboard" : "/gd/add-entry";
 
     try {
       const res = await axios.post(endpoint, payload);
