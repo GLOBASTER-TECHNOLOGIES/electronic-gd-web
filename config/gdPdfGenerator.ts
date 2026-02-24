@@ -61,6 +61,12 @@ const loadLocalFont = async (doc: jsPDF) => {
 
 // --- Main Generator Function ---
 export const generateGDPDF = async (gd: GDData) => {
+  // Fail gracefully if the entire object is missing
+  if (!gd) {
+    console.error("No GD data provided to generateGDPDF");
+    return;
+  }
+
   const doc = new jsPDF("p", "pt", "a4");
 
   const SCALE = 1.14; // 🔥 Global font scaling (10% increase)
@@ -73,10 +79,11 @@ export const generateGDPDF = async (gd: GDData) => {
 
   doc.setFontSize(8 * SCALE);
   doc.text("रे. सु. ब./फा. 2 /RPF/G. 2", 550, 30, { align: "right" });
-  doc.text("P.L.83055022", 550, 42, { align: "right" });
+  // doc.text("P.L.83055022", 550, 42, { align: "right" });
 
   doc.setFontSize(10 * SCALE);
-  doc.text("भारतीय रेल / INDIAN RAILWAYS", 297, 40, { align: "center" });
+  // doc.text("भारतीय रेल / INDIAN RAILWAYS", 297, 40, { align: "center" });
+  doc.text("SOUTHERN RAILWAYS", 297, 40, { align: "center" });
 
   doc.setFontSize(12 * SCALE);
   doc.text("रेलवे सुरक्षा बल / RAILWAY PROTECTION FORCE", 297, 56, {
@@ -88,12 +95,18 @@ export const generateGDPDF = async (gd: GDData) => {
     align: "center",
   });
 
-  doc.setFontSize(14 * SCALE);
-  doc.text("E", 340, 90);
+  // doc.setFontSize(14 * SCALE);
+  // doc.text("E", 340, 90);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16 * SCALE);
-  doc.text(gd.pageSerialNo.toString(), 550, 75, { align: "right" });
+
+  // 🔥 Safely handle missing pageSerialNo
+  const safeSerialNo =
+    gd.pageSerialNo !== undefined && gd.pageSerialNo !== null
+      ? gd.pageSerialNo.toString()
+      : "N/A";
+  doc.text(safeSerialNo, 550, 75, { align: "right" });
 
   doc.setFont("NotoSans", "normal");
 
@@ -105,12 +118,16 @@ export const generateGDPDF = async (gd: GDData) => {
   doc.text("Division/District", 40, startY);
 
   doc.setFontSize(11 * SCALE);
-  doc.text(gd.division.toUpperCase(), 120, startY - 2);
+
+  // 🔥 Safely handle missing string fields
+  const safeDivision = (gd.division || "").toUpperCase();
+  doc.text(safeDivision, 120, startY - 2);
   doc.line(115, startY + 2, 200, startY + 2);
 
-  const dateStr = new Date(gd.diaryDate)
-    .toLocaleDateString("en-GB")
-    .replace(/\//g, " . ");
+  // 🔥 Safely handle missing date
+  const safeDate = gd.diaryDate ? new Date(gd.diaryDate) : new Date();
+  const dateStr = safeDate.toLocaleDateString("en-GB").replace(/\//g, " . ");
+
   doc.setFontSize(12 * SCALE);
   doc.text(dateStr, 297, startY - 2, { align: "center" });
 
@@ -119,7 +136,8 @@ export const generateGDPDF = async (gd: GDData) => {
   doc.text("Lines/Post/O.P..........................", 360, startY);
 
   doc.setFontSize(10 * SCALE);
-  doc.text(gd.post.toUpperCase(), 434, startY - 2);
+  const safePost = (gd.post || "").toUpperCase();
+  doc.text(safePost, 434, startY - 2);
 
   // --- 4. THE TABLE ---
   const tableColumn = [
@@ -130,35 +148,37 @@ export const generateGDPDF = async (gd: GDData) => {
     { header: "हस्ताक्षर\nSignature", dataKey: "signature" },
   ];
 
-  const tableRows = gd.entries.map((entry) => {
-    const dateStr = new Date(entry.timeOfSubmission).toLocaleDateString(
-      "en-GB",
-    );
-    const timeStr = new Date(entry.timeOfSubmission).toLocaleTimeString(
-      "en-IN",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      },
-    );
+  // 🔥 Safely map entries array
+  const safeEntries = Array.isArray(gd.entries) ? gd.entries : [];
 
-    const name = entry.signature.officerName || "";
-    const force = entry.signature.forceNumber
+  const tableRows = safeEntries.map((entry) => {
+    const entryDate = entry.timeOfSubmission
+      ? new Date(entry.timeOfSubmission)
+      : new Date();
+    const entryDateStr = entryDate.toLocaleDateString("en-GB");
+    const timeStr = entryDate.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+
+    // Handle potentially nested undefined properties inside signature
+    const name = entry.signature?.officerName || "";
+    const force = entry.signature?.forceNumber
       ? `${entry.signature.forceNumber}`
       : "";
-    const rank = entry.signature.rank || "";
-    const officerPost = entry.signature.post || "";
+    const rank = entry.signature?.rank || "";
+    const officerPost = entry.signature?.post || "";
 
     const signatureBlock = [name, force, rank, officerPost]
       .filter((item) => item.trim() !== "")
       .join("\n");
 
     return {
-      dateTime: `${dateStr}\n${timeStr}`,
-      entryNo: entry.entryNo,
-      abstract: entry.abstract.toUpperCase(),
-      details: entry.details,
+      dateTime: `${entryDateStr}\n${timeStr}`,
+      entryNo: entry.entryNo || "",
+      abstract: (entry.abstract || "").toUpperCase(),
+      details: entry.details || "",
       signature: signatureBlock,
     };
   });
@@ -199,11 +219,12 @@ export const generateGDPDF = async (gd: GDData) => {
   });
 
   // --- 5. FOOTER ---
-  const pageHeight = doc.internal.pageSize.height;
-  doc.setFontSize(8 * SCALE);
-  doc.setFont("helvetica", "normal");
-  doc.text("S.R.06/01-2020/31900299/10.000 bks.x200lvs", 40, pageHeight - 20);
+  // const pageHeight = doc.internal.pageSize.height;
+  // doc.setFontSize(8 * SCALE);
+  // doc.setFont("helvetica", "normal");
+  // doc.text("S.R.06/01-2020/31900299/10.000 bks.x200lvs", 40, pageHeight - 20);
 
-  const fileName = `RPF_GD_${gd.post}_${new Date(gd.diaryDate).toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`;
+  const safeFileNamePost = safePost || "UNKNOWN";
+  const fileName = `RPF_GD_${safeFileNamePost}_${safeDate.toLocaleDateString("en-GB").replace(/\//g, "-")}.pdf`;
   doc.save(fileName);
 };
