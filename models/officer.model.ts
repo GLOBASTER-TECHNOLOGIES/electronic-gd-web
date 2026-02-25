@@ -40,21 +40,18 @@ const officerSchema = new mongoose.Schema(
     railwayZone: { type: String, required: true, trim: true },
     division: { type: String, required: true, trim: true },
 
-    // ✅ THE RELATIONAL LINK
     postId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Post", // Links to your 'Post' model
+      ref: "Post",
       required: true,
-      index: true, // Speeds up queries like "Find all officers in this Post"
+      index: true,
     },
 
-    // We keep these for easy display without needing .populate() every time
     postCode: {
       type: String,
       required: true,
       trim: true,
       uppercase: true,
-      // unique: false, // Explicitly false (Multiple officers can be at one post)
     },
 
     /* =========================
@@ -67,8 +64,45 @@ const officerSchema = new mongoose.Schema(
       trim: true,
     },
 
-    password: { type: String, required: true, select: false },
-    refreshToken: { type: String, select: false, default: null },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+
+    refreshToken: {
+      type: String,
+      select: false,
+      default: null,
+    },
+
+    /* =========================
+       PASSWORD SECURITY CONTROL
+    ========================== */
+
+    // 🔐 Force officer to change password on next login
+    mustChangePassword: {
+      type: Boolean,
+      default: true, // ✅ New officers must change password
+    },
+
+    // 🕒 Track when password last changed
+    lastPasswordChange: {
+      type: Date,
+      default: null,
+    },
+
+    // 🛠 Track admin reset event
+    passwordResetByAdminAt: {
+      type: Date,
+      default: null,
+    },
+
+    // 📅 Track login activity
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
 
     /* =========================
        AUDIT
