@@ -19,34 +19,38 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    // LOGIC: Detect Login Type
-    // If the ID contains numbers, we treat it as an Officer. 
-    // If it is pure text (like 'NDLS'), we treat it as a Post.
     const hasDigits = /\d/.test(userId);
     const isPostLogin = !hasDigits;
 
-    // ✅ Match your actual API routes
     const endpoint = isPostLogin ? "/api/post/login" : "/api/officer/login";
 
-    // ✅ Match the keys expected by your POST controllers
     const payload = isPostLogin
       ? { postCode: userId.trim(), password }
       : { forceNumber: userId.trim(), password };
-
-    // ✅ Match the dashboard paths defined in your middleware
-    const redirectPath = isPostLogin ? "/post/dashboard" : "/officer/profile";
-    // const redirectPath = isPostLogin ? "/post/dashboard" : "/gd/add-entry";
 
     try {
       const res = await axios.post(endpoint, payload);
 
       if (res.data.success) {
-        // Use window.location for a hard refresh if middleware 
-        // needs to re-read the new cookies immediately
+        // Access the flag from within the officer/post object
+        const userData = isPostLogin ? res.data.post : res.data.officer;
+        const mustChange = userData?.mustChangePassword;
+
+        console.log("Must Change Password:", mustChange);
+
+        if (mustChange) {
+          router.push("/update-password");
+          return;
+        }
+
+        // Normal redirect if password change isn't required
+        const redirectPath = isPostLogin ? "/post/dashboard" : "/officer/profile";
         router.push(redirectPath);
       }
+
     } catch (err: any) {
       setError(err?.response?.data?.message || "Invalid credentials.");
+    } finally {
       setLoading(false);
     }
   };
