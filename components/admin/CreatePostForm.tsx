@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Save,
   TrainFront,
-  Lock // Added Lock icon
+  Lock
 } from "lucide-react";
 
 export default function CreatePostForm() {
@@ -20,13 +20,12 @@ export default function CreatePostForm() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [formData, setFormData] = useState({
-    postName: "",
     postCode: "",
     division: "",
     contactNumber: "",
     address: "",
-    officerForceId: "", 
-    password: "", // Added password field
+    officerForceId: "",
+    password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -42,9 +41,8 @@ export default function CreatePostForm() {
       const res = await axios.post("/api/post/create-post", formData);
 
       if (res.data.success) {
-        setMessage({ type: "success", text: `Post "${res.data.data.postName}" created successfully!` });
+        setMessage({ type: "success", text: `Post created successfully!` });
         setFormData({
-          postName: "",
           postCode: "",
           division: "",
           contactNumber: "",
@@ -66,7 +64,7 @@ export default function CreatePostForm() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       
-      {/* 1. TOP HEADER */}
+      {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
@@ -84,46 +82,38 @@ export default function CreatePostForm() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* LEFT COLUMN: Main Station Info */}
+        {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* CARD 1: Essential Details */}
+          {/* CARD 1 */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
               <MapPin size={18} className="text-slate-900" /> Station Identity
             </h3>
             
             <div className="space-y-6">
-              {/* Row 1: Name & Code */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase">Post Name <span className="text-red-500">*</span></label>
-                  <input
-                    name="postName"
-                    value={formData.postName}
-                    onChange={handleChange}
-                    placeholder="E.g. TRICHY JUNCTION"
-                    required
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-slate-800 uppercase transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase">Station Code <span className="text-red-500">*</span></label>
-                  <input
-                    name="postCode"
-                    value={formData.postCode}
-                    onChange={handleChange}
-                    placeholder="E.g. TPJ"
-                    required
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-800 uppercase transition-all"
-                  />
-                </div>
+
+              {/* Row 1: Only Station Code */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600 uppercase">
+                  Station Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="postCode"
+                  value={formData.postCode}
+                  onChange={handleChange}
+                  placeholder="E.g. TPJ"
+                  required
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold text-slate-800 uppercase transition-all"
+                />
               </div>
 
               {/* Row 2: Division & Password */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-600 uppercase">Division <span className="text-red-500">*</span></label>
+                  <label className="text-xs font-bold text-slate-600 uppercase">
+                    Division <span className="text-red-500">*</span>
+                  </label>
                   <input
                     name="division"
                     value={formData.division}
@@ -134,7 +124,6 @@ export default function CreatePostForm() {
                   />
                 </div>
                 
-                {/* NEW PASSWORD FIELD */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1">
                     <Lock size={12} className="text-slate-400" /> Station Password <span className="text-red-500">*</span>
@@ -154,7 +143,7 @@ export default function CreatePostForm() {
             </div>
           </div>
 
-          {/* CARD 2: Contact & Location */}
+          {/* CARD 2 */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
               <Phone size={18} className="text-slate-900" /> Contact & Location
@@ -187,10 +176,9 @@ export default function CreatePostForm() {
 
         </div>
 
-        {/* RIGHT COLUMN: Officer Assign & Actions */}
+        {/* RIGHT COLUMN */}
         <div className="space-y-6">
           
-          {/* CARD 3: Officer Assignment */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
              <div className="bg-blue-50 p-4 rounded-xl mb-6 border border-blue-100">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2">
@@ -214,7 +202,6 @@ export default function CreatePostForm() {
              </div>
           </div>
 
-          {/* CARD 4: Actions & Feedback */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
              {message && (
               <div className={`p-4 rounded-xl flex items-start gap-3 mb-6 ${
@@ -222,7 +209,7 @@ export default function CreatePostForm() {
                   ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' 
                   : 'bg-red-50 text-red-800 border border-red-100'
               }`}>
-                {message.type === 'success' ? <CheckCircle2 className="shrink-0" size={20} /> : <AlertCircle className="shrink-0" size={20} />}
+                {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
                 <span className="text-sm font-medium leading-tight">{message.text}</span>
               </div>
             )}
@@ -230,7 +217,7 @@ export default function CreatePostForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> Create Post</>}
             </button>
