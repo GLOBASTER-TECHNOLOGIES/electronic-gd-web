@@ -122,16 +122,6 @@ export default function UpdatePostForm({ postId, onCancel, onSuccess }: UpdatePo
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-600 uppercase">Post Name</label>
-                                    <input
-                                        name="postName"
-                                        value={formData.postName}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg font-bold uppercase"
-                                    />
-                                </div>
-                                <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-600 uppercase">Station Code</label>
                                     <input
                                         name="postCode"
