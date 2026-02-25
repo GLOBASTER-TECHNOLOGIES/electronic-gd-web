@@ -13,7 +13,7 @@ const RAILWAY_ZONES = [
 ];
 
 /* =========================
-   🔧 FIX: Move Components Outside
+   Input Components
 ========================= */
 
 const Input = ({ label, name, value, onChange, placeholder, type = "text", required = true }: any) => (
@@ -71,7 +71,6 @@ export default function CreateOfficerForm() {
     name: '',
     forceNumber: '',
     rank: 'Constable',
-    appRole: 'STAFF',
     railwayZone: 'SOUTHERN RAILWAY',
     division: '',
     postCode: '',
@@ -111,7 +110,6 @@ export default function CreateOfficerForm() {
         name: '',
         forceNumber: '',
         rank: 'Constable',
-        appRole: 'STAFF',
         railwayZone: 'SOUTHERN RAILWAY',
         division: '',
         postCode: '',
@@ -142,16 +140,17 @@ export default function CreateOfficerForm() {
 
       <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
 
+        {/* 01 Identity */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest border-b border-gray-100 pb-2">01. Official Identity</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Input label="Full Name" name="name" placeholder="EX: RAJESH KUMAR" value={formData.name} onChange={handleChange} />
             <Input label="Force ID (Unique)" name="forceNumber" placeholder="EX: RPF-8821" value={formData.forceNumber} onChange={handleChange} />
-            <Select label="Rank" name="rank" options={["Constable", "Head Constable", "ASI", "SI", "Inspector", "IPF", "DSC", "Sr.DSC", "ADMIN"]} value={formData.rank} onChange={handleChange} />
-            <Select label="Application Role" name="appRole" options={["STAFF", "SO", "IPF", "DSC", "ADMIN"]} value={formData.appRole} onChange={handleChange} />
+            <Select label="Rank" name="rank" options={["Constable", "Head Constable", "ASI", "SI", "IPF", "ASC", "Sr.DSC", "ADMIN"]} value={formData.rank} onChange={handleChange} />
           </div>
         </div>
 
+        {/* 02 Posting */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest border-b border-gray-100 pb-2">02. Posting Details</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -161,6 +160,7 @@ export default function CreateOfficerForm() {
           </div>
         </div>
 
+        {/* 03 Credentials */}
         <div className="space-y-4">
           <h4 className="text-xs font-bold text-gray-300 uppercase tracking-widest border-b border-gray-100 pb-2">03. Access Credentials</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
