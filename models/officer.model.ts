@@ -58,12 +58,6 @@ const officerSchema = new mongoose.Schema(
       // unique: false, // Explicitly false (Multiple officers can be at one post)
     },
 
-    postName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
     /* =========================
        CONTACT & AUTH
     ========================== */
