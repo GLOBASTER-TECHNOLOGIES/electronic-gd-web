@@ -38,20 +38,16 @@ export async function POST(request: NextRequest) {
       id: officer._id,
       role: officer.appRole,
       postCode: officer.postCode, // ✅ Included for context
-      postId: officer.postId,     // ✅ Included for database links
+      postId: officer.postId, // ✅ Included for database links
     };
 
-    const officerAccessToken = jwt.sign(
-      jwtPayload,
-      ACCESS_SECRET,
-      { expiresIn: "15m" },
-    );
+    const officerAccessToken = jwt.sign(jwtPayload, ACCESS_SECRET, {
+      expiresIn: "15m",
+    });
 
-    const officerRefreshToken = jwt.sign(
-      { id: officer._id }, 
-      REFRESH_SECRET, 
-      { expiresIn: "7d" }
-    );
+    const officerRefreshToken = jwt.sign({ id: officer._id }, REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
 
     // 3. Update Database session
     officer.refreshToken = officerRefreshToken;
@@ -69,9 +65,10 @@ export async function POST(request: NextRequest) {
         postCode: officer.postCode,
         postName: officer.postName,
         division: officer.division,
+        mustChangePassword: officer.mustChangePassword,
       },
     });
-
+    console.log(officer);
     /* ==========================================================
        🔒 UPDATED COOKIE NAMES
     ========================================================== */
