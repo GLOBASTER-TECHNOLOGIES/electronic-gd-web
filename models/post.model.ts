@@ -2,14 +2,6 @@ import mongoose from "mongoose";
 
 const PostSchema = new mongoose.Schema(
   {
-    postName: {
-      type: String,
-      required: [true, "Post Name is required"],
-      unique: true,
-      trim: true,
-      uppercase: true,
-    },
-
     postCode: {
       type: String,
       required: [true, "Station Code is required"],
