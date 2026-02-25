@@ -5,6 +5,23 @@ import Officer from "@/models/officer.model";
 import Post from "@/models/post.model";
 import jwt from "jsonwebtoken";
 
+function normalizeDiaryDate(dateInput: Date | string) {
+  const date = new Date(dateInput);
+  const now = date.getTime();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now + istOffset);
+  istTime.setUTCHours(0, 0, 0, 0);
+  return new Date(istTime.getTime() - istOffset);
+}
+
+// ✅ NEW HELPER: Generates the custom Serial Number format
+function generateSerialNo(postCode: string, date: Date) {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const yyyy = date.getFullYear();
+  return `${postCode.toUpperCase()}-${dd}-${mm}-${yyyy}`;
+}
+
 export async function POST(request: NextRequest) {
   await dbConnect();
 
@@ -19,11 +36,9 @@ export async function POST(request: NextRequest) {
     let actorType: "POST" | "OFFICER" = "OFFICER";
     let primaryPayload: any = null;
     let signerPostCode = "";
-    let signerPostName = "";
 
     // 2. Dual-Case Logic (Visiting vs Native)
     if (postToken && postRefresh && visitingToken) {
-      // CASE A: Visiting Officer
       try {
         primaryPayload = jwt.verify(postToken, process.env.JWT_ACCESS_SECRET!);
         actorType = "POST";
@@ -42,7 +57,6 @@ export async function POST(request: NextRequest) {
           forceNumber: visitingOfficerDoc.forceNumber,
         };
         signerPostCode = visitingOfficerDoc.postCode;
-        signerPostName = "Visiting from " + visitingOfficerDoc.postCode;
       } catch (err) {
         return NextResponse.json(
           { message: "Session expired." },
@@ -50,7 +64,6 @@ export async function POST(request: NextRequest) {
         );
       }
     } else if (officerToken && !visitingToken) {
-      // CASE B: Native Officer
       try {
         primaryPayload = jwt.verify(
           officerToken,
@@ -92,11 +105,6 @@ export async function POST(request: NextRequest) {
       );
 
     const targetPostCode = postDoc.postCode;
-    const targetPostName = postDoc.postName;
-
-    if (actorType === "OFFICER" || signerPostCode === targetPostCode) {
-      signerPostName = targetPostName;
-    }
 
     // 4. Prepare Entry
     const body = await request.json();
@@ -107,30 +115,29 @@ export async function POST(request: NextRequest) {
       officerName: signaturePayload.officerName,
       rank: signaturePayload.rank,
       forceNumber: signaturePayload.forceNumber,
-      postCode: signerPostCode, // ✅ Correctly stores signer's home post
-      postName: signerPostName,
+      postCode: signerPostCode,
       signedAt: new Date(),
     };
 
     // 5. Calculate Date Boundaries
-    const istDate = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
-    istDate.setUTCHours(0, 0, 0, 0);
-    const startOfDay = new Date(istDate.getTime() - 5.5 * 60 * 60 * 1000);
+    const startOfDay = normalizeDiaryDate(new Date());
 
-    // 6. DB Operation (Fixed Query)
+    // ✅ 6. Generate the custom serial number (e.g., TPJ-05-11-2025)
+    const customSerialNo = generateSerialNo(targetPostCode, startOfDay);
+
+    // 7. DB Operation
     const gd = await GeneralDiary.findOneAndUpdate(
       {
-        postCode: targetPostCode, // ✅ STRICTLY using postCode
+        postCode: targetPostCode,
         diaryDate: startOfDay,
       },
       {
         $inc: { lastEntryNo: 1 },
         $setOnInsert: {
-          postName: targetPostName,
           division: division || postDoc.division || "N/A",
           createdBy: primaryPayload.id,
           status: "ACTIVE",
-          // Mongoose defaults will handle pageSerialNo
+          pageSerialNo: customSerialNo, // ✅ Assigned during creation only
         },
       },
       { upsert: true, new: true },
@@ -148,7 +155,7 @@ export async function POST(request: NextRequest) {
     gd.entries.push(entry);
     await gd.save();
 
-    // 7. Cleanup & Response
+    // 8. Cleanup & Response
     const response = NextResponse.json({
       success: true,
       message: "Entry recorded",
@@ -162,7 +169,6 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error: any) {
     console.error("GD Error:", error.message);
-    // Handle specific duplicate key errors gracefully if they ever happen again
     if (error.code === 11000) {
       return NextResponse.json(
         { message: "Concurrency Error: Please try again." },
