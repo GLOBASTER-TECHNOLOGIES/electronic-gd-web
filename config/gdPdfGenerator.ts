@@ -106,6 +106,7 @@ export const generateGDPDF = async (gd: GDData) => {
     gd.pageSerialNo !== undefined && gd.pageSerialNo !== null
       ? gd.pageSerialNo.toString()
       : "N/A";
+  doc.setFontSize(15);  
   doc.text(safeSerialNo, 550, 75, { align: "right" });
 
   doc.setFont("NotoSans", "normal");
@@ -135,9 +136,9 @@ export const generateGDPDF = async (gd: GDData) => {
   doc.text("लाइन/थाना/चौकी..........................", 360, startY - 12);
   doc.text("Lines/Post/O.P..........................", 360, startY);
 
-  doc.setFontSize(10 * SCALE);
+  doc.setFontSize(9 * SCALE);
   const safePost = (gd.post || "").toUpperCase();
-  doc.text(safePost, 434, startY - 2);
+  doc.text(safePost, 438, startY - 2);
 
   // --- 4. THE TABLE ---
   const tableColumn = [
