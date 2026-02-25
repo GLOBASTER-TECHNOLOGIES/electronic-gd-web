@@ -39,7 +39,7 @@ export default function UpdatePasswordPage() {
     const toastId = toast.loading("Updating password...");
 
     try {
-      const res = await fetch("/api/post/update-password", {
+      const res = await fetch("/api/auth/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newPassword: formData.newPassword }),
@@ -53,8 +53,18 @@ export default function UpdatePasswordPage() {
 
       toast.success("Password updated successfully", { id: toastId });
 
+      // 🔍 Detect login type from cookies
+      const officerToken = document.cookie.includes("officerAccessToken");
+      const postToken = document.cookie.includes("postAccessToken");
+
       setTimeout(() => {
-        router.push("/dashboard"); // change if needed
+        if (officerToken) {
+          router.push("/officer/profile");
+        } else if (postToken) {
+          router.push("/post/dashboard");
+        } else {
+          router.push("/login"); // fallback
+        }
       }, 1200);
 
     } catch (error: any) {
@@ -82,7 +92,7 @@ export default function UpdatePasswordPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 text-black space-y-5">
 
           <PasswordField
             label="New Password"
