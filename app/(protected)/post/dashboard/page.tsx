@@ -206,7 +206,7 @@ export default function PostsDashboard() {
 
                 {/* VIEW GD */}
                 <button
-                  onClick={() => router.push(`/post/view-gd?postCode=${post.postCode}`)}
+                  onClick={() => router.push(`/post/gd?postCode=${post.postCode}`)}
                   className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
                 >
                   <div className="flex items-center gap-4">
@@ -260,6 +260,25 @@ export default function PostsDashboard() {
                       </h4>
                       <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
                         Register New Officer
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight size={18} className="text-gray-300 group-hover:text-slate-900 transition-colors" />
+                </button>
+                <button
+                  onClick={() => router.push(`/post/update?postCode=${post.postCode}`)}
+                  className="bg-white border border-gray-300 p-5 hover:bg-gray-50 flex items-center justify-between transition-colors group shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-purple-100 p-3 rounded text-purple-700">
+                      <FileText size={20} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="text-sm font-bold uppercase text-slate-900">
+                        Update GD
+                      </h4>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                        Modify Existing Entry
                       </p>
                     </div>
                   </div>
