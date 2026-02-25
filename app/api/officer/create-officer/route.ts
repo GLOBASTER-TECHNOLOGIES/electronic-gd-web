@@ -17,12 +17,11 @@ export async function POST(request: NextRequest) {
       division,
       postCode, // We get Code from frontend
       mobileNumber,
-      password,
       createdBy,
     } = body;
 
     // 1. Validation
-    if (!forceNumber || !name || !postCode || !mobileNumber || !password) {
+    if (!forceNumber || !name || !postCode || !mobileNumber) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 },
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Hash Password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash("0000000", 10);
 
     // 5. CREATE OFFICER (With postId)
     const officer = await Officer.create({
