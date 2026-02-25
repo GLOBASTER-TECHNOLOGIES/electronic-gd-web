@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const post = searchParams.get("post"); // OLD (kept for compatibility)
-    const postCode = searchParams.get("postCode"); // ✅ NEW (correct field)
+    const post = searchParams.get("post"); // OLD compatibility
+    const postCode = searchParams.get("postCode"); // NEW correct field
     const dateParam = searchParams.get("date");
     const id = searchParams.get("id");
 
     // ====================================================
-    // CASE 1: FETCH FULL GD BY ID (Admin → Show More)
+    // CASE 1: FETCH FULL GD BY ID
     // ====================================================
     if (id) {
       if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -48,25 +48,45 @@ export async function GET(request: NextRequest) {
     }
 
     // ====================================================
-    // CASE 2: FETCH BY POSTCODE + DATE (Post View)
+    // CASE 2: FETCH BY POSTCODE (WITH OR WITHOUT DATE)
     // ====================================================
     if (postCode || post) {
-      const targetDate = dateParam ? new Date(dateParam) : new Date();
-      const queryDate = normalizeDiaryDate(targetDate);
-
       const queryField = postCode
-        ? { postCode: postCode.toUpperCase() } // ✅ correct schema field
-        : { post: post }; // fallback for old usage
+        ? { postCode: postCode.toUpperCase() }
+        : { post: post };
 
-      const gd = await GeneralDiary.findOne({
-        ...queryField,
-        diaryDate: queryDate,
-      })
+      // 🔹 If DATE is provided → return single GD
+      if (dateParam) {
+        const targetDate = new Date(dateParam);
+        const startOfDay = normalizeDiaryDate(targetDate);
+
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setDate(endOfDay.getDate() + 1);
+
+        const gd = await GeneralDiary.findOne({
+          ...queryField,
+          diaryDate: {
+            $gte: startOfDay,
+            $lt: endOfDay,
+          },
+        })
+          .select("-__v")
+          .lean();
+
+        return NextResponse.json(
+          { success: true, data: gd || null },
+          { status: 200 },
+        );
+      }
+
+      // 🔹 If ONLY postCode provided → return ALL GDs
+      const allGDs = await GeneralDiary.find(queryField)
+        .sort({ diaryDate: -1 })
         .select("-__v")
         .lean();
 
       return NextResponse.json(
-        { success: true, data: gd || null },
+        { success: true, data: allGDs },
         { status: 200 },
       );
     }
@@ -82,7 +102,7 @@ export async function GET(request: NextRequest) {
         $project: {
           _id: 1,
           division: 1,
-          postCode: 1, // ✅ Include postCode
+          postCode: 1,
           diaryDate: 1,
           pageSerialNo: 1,
           hasCorrections: 1,
@@ -92,12 +112,14 @@ export async function GET(request: NextRequest) {
         },
       },
     ]);
+
     return NextResponse.json(
       { success: true, data: summaries },
       { status: 200 },
     );
   } catch (error) {
     console.error("Fetch GD Error:", error);
+
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 },
