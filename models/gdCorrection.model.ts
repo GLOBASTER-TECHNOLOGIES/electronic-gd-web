@@ -10,7 +10,6 @@ interface ISignatureSnapshot {
   rank: string;
   forceNumber: string;
   postCode: string;
-  postName: string;
   signedAt: Date;
 }
 
@@ -94,7 +93,6 @@ const GdCorrectionSchema = new Schema<ICorrectionLog>(
         rank: String,
         forceNumber: String,
         postCode: String,
-        postName: String,
         signedAt: Date,
       },
     },

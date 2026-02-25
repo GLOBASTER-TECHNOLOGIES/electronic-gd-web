@@ -27,7 +27,6 @@ const EntrySchema = new Schema(
 
       // ✅ STORE BOTH HERE TOO (For historical accuracy)
       postCode: { type: String, required: true },
-      postName: { type: String, required: true },
 
       signedAt: { type: Date, default: Date.now },
     },
@@ -58,13 +57,6 @@ const GeneralDiarySchema = new Schema(
       index: true,
     },
 
-    // ✅ THE DISPLAY NAME (Use this for UI)
-    postName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
     /* ===== DATE CONTROL ===== */
     diaryDate: {
       type: Date,
@@ -73,7 +65,7 @@ const GeneralDiarySchema = new Schema(
     },
 
     pageSerialNo: {
-      type: Number,
+      type: String,
       unique: true, // Enforces uniqueness for numbers like 101, 102...
       sparse: true, // ✅ ALLOWS multiple documents to be null/undefined
       default: undefined, // undefined is safer than null for sparse indexes
