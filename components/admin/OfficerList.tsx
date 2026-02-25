@@ -1,17 +1,17 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Shield, 
-  Loader2, 
-  Phone, 
-  MapPin, 
-  BadgeCheck, 
+import {
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Shield,
+  Loader2,
+  Phone,
+  MapPin,
+  BadgeCheck,
   UserCog,
-  Hash // 1. Added Hash icon
+  Hash
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -25,7 +25,7 @@ interface Officer {
   railwayZone: string;
   division: string;
   postName: string;
-  postCode?: string; // 2. Added postCode to interface
+  postCode?: string;
   mobileNumber: string;
   lastLoginAt?: string;
   status?: string;
@@ -33,27 +33,31 @@ interface Officer {
 
 interface OfficerListProps {
   onEdit?: (id: string) => void;
+  postCode?: string | null; // ✅ Added optional postCode
 }
 
-export default function OfficerList({ onEdit }: OfficerListProps) {
+export default function OfficerList({ onEdit, postCode }: OfficerListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ... (Fetch logic remains the same) ...
-  const fetchOfficers = async (query = '') => {
+  const fetchOfficers = async (search = '') => {
     setLoading(true);
     try {
-      const url = '/api/officer/get-officer';
-      const response = await axios.get(url, { params: { query: query } });
+
+      const finalQuery = search || postCode || '';
+
+      const response = await axios.get('/api/officer/get-officer', {
+        params: { query: finalQuery }
+      });
 
       if (response.data.success) {
         setOfficers(response.data.data);
       } else {
         toast.error("Failed to load officers");
       }
+
     } catch (error: any) {
-      console.error("Fetch error:", error);
       const msg = error.response?.data?.message || "Error connecting to server";
       toast.error(msg);
     } finally {
@@ -65,14 +69,14 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
     const delayDebounceFn = setTimeout(() => {
       fetchOfficers(searchTerm);
     }, 500);
+
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  }, [searchTerm, postCode ?? null]);
 
   return (
     <div className="space-y-6">
-      {/* ... (Header, Search, and Loading states remain same) ... */}
-      
-      {/* Header & Actions */}
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h3 className="text-xl font-bold text-gray-900 tracking-tight">Officer Directory</h3>
@@ -101,7 +105,7 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
         />
       </div>
 
-      {/* Content Area */}
+      {/* Content */}
       <div className="min-h-[300px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 text-gray-400">
@@ -127,7 +131,7 @@ export default function OfficerList({ onEdit }: OfficerListProps) {
         )}
       </div>
 
-      {/* Footer (Same as before) */}
+      {/* Footer */}
       {!loading && officers.length > 0 && (
         <div className="flex items-center justify-between text-sm text-gray-500 px-2 pt-2 border-t border-gray-100">
           <span>Showing {officers.length} records</span>
@@ -147,7 +151,6 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow p-5 flex flex-col justify-between h-full group">
 
-      {/* Top Section */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-blue-100 shadow-lg">
@@ -162,10 +165,9 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
           </div>
         </div>
 
-        {/* Action Menu */}
         <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
           {onEdit && (
-            <button 
+            <button
               onClick={() => onEdit(officer._id)}
               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Edit Details"
@@ -179,12 +181,8 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
         </div>
       </div>
 
-      {/* Middle Section */}
       <div className="space-y-3 mb-5">
-        
-        {/* 3. UPDATED LOCATION BOX WITH POST CODE */}
         <div className="bg-gray-50 rounded-xl p-3 text-xs space-y-2 border border-gray-100">
-          {/* Post Name and Division */}
           <div className="flex items-start gap-2 text-gray-600">
             <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
             <div className="flex-1">
@@ -193,7 +191,6 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
             </div>
           </div>
 
-          {/* Post Code Display */}
           {officer.postCode && (
             <div className="flex items-center gap-2 pl-6">
               <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 rounded-md shadow-sm">
@@ -218,7 +215,6 @@ function OfficerCard({ officer, onEdit }: { officer: Officer, onEdit?: (id: stri
         </div>
       </div>
 
-      {/* Bottom Section */}
       <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
         <div className="flex items-center gap-1.5 text-gray-400">
           <div className={`w-2 h-2 rounded-full ${isLoginActive ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
