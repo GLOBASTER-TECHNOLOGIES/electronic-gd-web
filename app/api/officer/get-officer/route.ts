@@ -4,51 +4,55 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // 1. Connect to Database
     await dbConnect();
 
-    // 2. Extract Query Parameters (for search/filtering)
     const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("query"); // e.g., ?query=RPF-8821 or ?query=Rajesh
 
-    let officers;
+    // ✅ Get query param safely
+    const query = searchParams.get("query")?.trim();
 
-    if (query) {
-      // SCENARIO A: Search Mode
-      // Finds officers where Name OR ForceNumber matches the query (case-insensitive)
-      officers = await Officer.find({
+    console.log("Query received:", query);
+
+    let filter: any = {};
+
+    // ✅ If query exists and is not empty → build search filter
+    if (query && query.length > 0) {
+      filter = {
         $or: [
           { name: { $regex: query, $options: "i" } },
           { forceNumber: { $regex: query, $options: "i" } },
+          { postCode: { $regex: query, $options: "i" } },
+          { postName: { $regex: query, $options: "i" } },
+          { division: { $regex: query, $options: "i" } },
+          { railwayZone: { $regex: query, $options: "i" } },
         ],
-      })
-        .select("-password -refreshToken") // Explicitly exclude sensitive data
-        .sort({ createdAt: -1 }); // Newest first
-    } else {
-      // SCENARIO B: Fetch All Mode
-      officers = await Officer.find({})
-        .select("-password -refreshToken") // Explicitly exclude sensitive data
-        .sort({ createdAt: -1 });
+      };
     }
 
-    // 3. Return Response
+    // ✅ If no query → filter remains {}
+    const officers = await Officer.find(filter)
+      .select("-password -refreshToken")
+      .sort({ createdAt: -1 });
+
     return NextResponse.json(
       {
         success: true,
         count: officers.length,
         data: officers,
       },
-      { status: 200 },
+      { status: 200 }
     );
+
   } catch (error: any) {
     console.error("Error fetching officers:", error);
+
     return NextResponse.json(
       {
         success: false,
         message: "Failed to fetch officer records",
         error: error.message,
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
