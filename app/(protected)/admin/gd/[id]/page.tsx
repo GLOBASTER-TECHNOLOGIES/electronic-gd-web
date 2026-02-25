@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Download, Shield, Calendar, MapPin } from "lucide-react";
 import { generateGDPDF } from "@/config/gdPdfGenerator";
 
-// Types
+// ✅ STRICT TYPES: Removed all references to postName or post
 interface Entry {
     _id: string;
     entryNo: number;
@@ -16,8 +16,7 @@ interface Entry {
     signature: {
         officerName: string;
         rank: string;
-        post: string;
-        postCode?: string; // ✅ ADDED
+        postCode: string; 
         forceNumber: string;
     };
 }
@@ -25,8 +24,7 @@ interface Entry {
 interface GDData {
     _id: string;
     division: string;
-    post: string;
-    postName: string;
+    postCode: string; 
     diaryDate: string;
     pageSerialNo: number;
     entries: Entry[];
@@ -60,8 +58,10 @@ export default function SingleGDViewPage() {
 
         const safeGD = {
             ...gd,
-            // Header still needs a value (Station Name or Code)
-            post: gd.post || gd.postName,
+            // 🔒 Send ONLY postCode to the PDF generator
+            // (Passed as 'post' too, just in case your PDF Generator script still looks for that key)
+            post: gd.postCode, 
+            postCode: gd.postCode,
 
             entries: gd.entries.map((entry) => ({
                 ...entry,
@@ -70,10 +70,8 @@ export default function SingleGDViewPage() {
 
                 signature: {
                     ...entry.signature,
-                    // 🔥 FIX: Directly use the Post Code. 
-                    // If code is missing, fallback to the name, otherwise empty string.
-                    post: entry.signature.postCode || entry.signature.post || "",
-
+                    // 🔒 Ensure PDF only gets the postCode for the signature
+                    post: entry.signature.postCode, 
                     postCode: entry.signature.postCode
                 }
             })),
@@ -125,8 +123,9 @@ export default function SingleGDViewPage() {
                                 <span className="flex items-center gap-2">
                                     <Shield size={16} /> {gd.division} Division
                                 </span>
+                                {/* ✅ Updated to postCode */}
                                 <span className="flex items-center gap-2">
-                                    <MapPin size={16} /> {gd.post}
+                                    <MapPin size={16} /> {gd.postCode}
                                 </span>
                                 <span className="flex items-center gap-2">
                                     <Calendar size={16} />{" "}
@@ -152,7 +151,7 @@ export default function SingleGDViewPage() {
                                     Page Serial No
                                 </p>
                                 <p className="text-xl font-mono font-bold">
-                                    {gd.pageSerialNo}
+                                    {gd.pageSerialNo || "N/A"}
                                 </p>
                             </div>
                         </div>
@@ -218,7 +217,7 @@ export default function SingleGDViewPage() {
 
                                         {/* SIGNATURE COLUMN */}
                                         <td className="py-4 pl-4 align-top">
-                                            <div className="flex flex-col leading-tight">
+                                            <div className="flex flex-col leading-tight gap-1">
                                                 <span className="font-bold text-xs uppercase text-black">
                                                     {entry.signature?.officerName}
                                                 </span>
@@ -227,19 +226,13 @@ export default function SingleGDViewPage() {
                                                     {entry.signature?.rank}
                                                 </span>
 
-                                                {/* ✅ Post Code Added Here */}
-                                                {entry.signature?.postCode && (
-                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                                                        Post Code: {entry.signature.postCode}
-                                                    </span>
-                                                )}
+                                                {/* ✅ Only Post Code Displayed Here */}
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                                    Post Code: {entry.signature?.postCode}
+                                                </span>
 
                                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                                     Force No: {entry.signature?.forceNumber}
-                                                </span>
-
-                                                <span className="text-[9px] font-bold text-black uppercase tracking-wider mt-1 border-t border-gray-200 pt-1 inline-block">
-                                                    {entry.signature?.post}
                                                 </span>
                                             </div>
                                         </td>
