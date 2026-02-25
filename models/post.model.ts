@@ -23,7 +23,6 @@ const PostSchema = new mongoose.Schema(
       uppercase: true,
     },
 
-    /* --- Contact & Location --- */
     contactNumber: {
       type: String,
       default: "",
@@ -34,18 +33,16 @@ const PostSchema = new mongoose.Schema(
       default: "",
     },
 
-    /* --- Authentication (NEW) --- */
-
     password: {
       type: String,
       required: true,
-      select: false, // 🔐 never return password by default
+      select: false,
     },
 
     refreshToken: {
       type: String,
       default: null,
-      select: false, // 🔐 secure
+      select: false,
     },
 
     lastPasswordChange: {
@@ -58,7 +55,17 @@ const PostSchema = new mongoose.Schema(
       default: null,
     },
 
-    /* --- Administrative --- */
+    // ✅ NEW SECURITY FIELDS
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+
+    passwordResetByAdminAt: {
+      type: Date,
+      default: null,
+    },
+
     officerInCharge: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Officer",
@@ -67,7 +74,7 @@ const PostSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 export default mongoose.models.Post || mongoose.model("Post", PostSchema);
