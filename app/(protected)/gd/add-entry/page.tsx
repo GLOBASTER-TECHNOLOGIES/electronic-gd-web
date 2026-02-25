@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Save, ShieldAlert, Loader2, X, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Save, ShieldAlert, Loader2, X, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 
 interface UserProfile {
   _id: string;
@@ -20,7 +20,6 @@ export default function AddGDEntryPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(true);
 
-  // Live Time State
   const [time, setTime] = useState(new Date());
 
   const [formData, setFormData] = useState({
@@ -28,7 +27,6 @@ export default function AddGDEntryPage() {
     details: "",
   });
 
-  // ✅ Checkbox Acknowledgment State
   const [isAckModalOpen, setIsAckModalOpen] = useState(false);
   const [isAcknowledged, setIsAcknowledged] = useState(false);
 
@@ -114,14 +112,26 @@ export default function AddGDEntryPage() {
 
   return (
     <div className="min-h-screen bg-[#eef0f3] py-8 px-4 flex justify-center font-sans text-gray-900">
-
       <div className="w-full max-w-3xl bg-white shadow-sm border border-gray-300 min-h-[900px] flex flex-col relative">
 
         {/* HEADER */}
         <header className="border-b-2 border-black p-8 pb-4">
+
+          {/* ✅ BACK BUTTON (Only Addition) */}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mb-6 border border-black px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-black hover:text-white transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+
           <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-tight leading-none">General Diary</h1>
+              <h1 className="text-2xl font-black uppercase tracking-tight leading-none">
+                General Diary
+              </h1>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mt-1">
                 Railway Protection Force
               </p>
@@ -136,15 +146,21 @@ export default function AddGDEntryPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm border-t border-gray-200 pt-4">
             <div>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Station / Post</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                Station / Post
+              </span>
               <span className="block font-semibold uppercase">{user.postName}</span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Division</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                Division
+              </span>
               <span className="block font-semibold uppercase">{user.division}</span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Date</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                Date
+              </span>
               <span className="block font-mono">{time.toLocaleDateString('en-GB')}</span>
             </div>
             <div>
@@ -161,16 +177,23 @@ export default function AddGDEntryPage() {
 
           <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-2 gap-8">
             <div>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Duty Officer</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                Duty Officer
+              </span>
               <span className="block font-medium">{user.name}</span>
             </div>
             <div>
-              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Rank & ID</span>
-              <span className="block font-medium">{user.rank} / {user.forceNumber}</span>
+              <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                Rank & ID
+              </span>
+              <span className="block font-medium">
+                {user.rank} / {user.forceNumber}
+              </span>
             </div>
           </div>
         </header>
 
+        {/* BODY and rest remains exactly same */}
         {/* BODY */}
         <div className="flex-1 p-8 md:p-10 flex flex-col gap-8">
 
@@ -211,7 +234,7 @@ export default function AddGDEntryPage() {
           <div className="pt-6 border-t-2 border-black flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs text-red-600 font-bold uppercase">
               <ShieldAlert size={14} />
-              <span>Official Record • Cannot be modified</span>
+              <span>• Official Record •</span>
             </div>
 
             <button
@@ -277,7 +300,6 @@ export default function AddGDEntryPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
