@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import CreateOfficerForm from "@/components/admin/CreateOfficerForm";
 import OfficerList from "@/components/admin/OfficerList";
-import { UserPlus, X } from "lucide-react";
+import { UserPlus, X, ArrowLeft } from "lucide-react";
 
 const Page = () => {
+    const router = useRouter(); // ✅ Added
     const [showForm, setShowForm] = useState(false);
     const [postCode, setPostCode] = useState<string | null>(null);
     console.log(postCode)
@@ -17,7 +19,7 @@ const Page = () => {
                 const res = await axios.get("/api/auth/me");
 
                 if (res.data.success && res.data.userType === "POST") {
-                    setPostCode(res.data.user.postCode); // 👈 sending postCode
+                    setPostCode(res.data.user.postCode);
                 }
             } catch (err) {
                 console.error("Failed to fetch post info");
@@ -33,13 +35,25 @@ const Page = () => {
 
                 {/* HEADER */}
                 <div className="bg-white border-b-2 border-slate-900 p-6 shadow-sm flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold uppercase tracking-tight">
-                            Officer Management
-                        </h1>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            Railway Protection Force • Official Use Only
-                        </p>
+                    <div className="flex items-center gap-4">
+                        
+                        {/* ✅ BACK BUTTON */}
+                        <button
+                            onClick={() => router.back()}
+                            className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded text-xs font-bold uppercase hover:bg-gray-100 transition-colors"
+                        >
+                            <ArrowLeft size={14} />
+                            Back
+                        </button>
+
+                        <div>
+                            <h1 className="text-2xl font-bold uppercase tracking-tight">
+                                Officer Management
+                            </h1>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                Railway Protection Force • Official Use Only
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -61,8 +75,6 @@ const Page = () => {
                         <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">
                             Create New Officer
                         </h2>
-
-                        {/* 👇 Send postCode to form if needed */}
                         <CreateOfficerForm />
                     </div>
                 )}
@@ -72,8 +84,6 @@ const Page = () => {
                     <h2 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">
                         Registered Officers
                     </h2>
-
-                    {/* 👇 Passing postCode as prop */}
                     <OfficerList postCode={postCode} />
                 </div>
 
