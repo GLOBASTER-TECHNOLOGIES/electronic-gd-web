@@ -23,16 +23,15 @@ const officerSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "ADMIN", "Constable", "Head Constable", "ASI", "SI", 
-        "Inspector", "IPF", "DSC", "Sr.DSC"
+        "ADMIN",
+        "Constable",
+        "Head Constable",
+        "ASI",
+        "SI",
+        "IPF",
+        "ASC",
+        "Sr.DSC",
       ],
-    },
-
-    appRole: {
-      type: String,
-      required: true,
-      enum: ["ADMIN", "STAFF", "SO", "IPF", "DSC"],
-      index: true,
     },
 
     /* =========================
@@ -80,7 +79,8 @@ const officerSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.models.Officer || mongoose.model("Officer", officerSchema);
+export default mongoose.models.Officer ||
+  mongoose.model("Officer", officerSchema);
