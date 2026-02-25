@@ -11,7 +11,7 @@ interface UserProfile {
   rank: string;
   forceNumber: string;
   division: string;
-  postName: string;
+  postCode: string; // changed
 }
 
 export default function AddGDEntryPage() {
@@ -36,7 +36,7 @@ export default function AddGDEntryPage() {
     const fetchUser = async () => {
       try {
         const res = await axios.get("/api/auth/me", {
-          params: { fields: "name,rank,forceNumber,division,postName" }
+          params: { fields: "name,rank,forceNumber,division,postCode" } // changed
         });
         setUser(res.data.user);
       } catch {
@@ -73,7 +73,7 @@ export default function AddGDEntryPage() {
     const payload = {
       ...formData,
       division: user.division,
-      post: user.postName,
+      postCode: user.postCode, // changed
       officerId: user._id,
       officerName: user.name,
       rank: user.rank,
@@ -117,7 +117,6 @@ export default function AddGDEntryPage() {
         {/* HEADER */}
         <header className="border-b-2 border-black p-8 pb-4">
 
-          {/* ✅ BACK BUTTON (Only Addition) */}
           <button
             type="button"
             onClick={() => router.back()}
@@ -147,9 +146,9 @@ export default function AddGDEntryPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-8 text-sm border-t border-gray-200 pt-4">
             <div>
               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-                Station / Post
+                Station / Post Code
               </span>
-              <span className="block font-semibold uppercase">{user.postName}</span>
+              <span className="block font-semibold uppercase">{user.postCode}</span>
             </div>
             <div>
               <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
@@ -193,8 +192,6 @@ export default function AddGDEntryPage() {
           </div>
         </header>
 
-        {/* BODY and rest remains exactly same */}
-        {/* BODY */}
         <div className="flex-1 p-8 md:p-10 flex flex-col gap-8">
 
           <div className="space-y-2">
@@ -248,12 +245,9 @@ export default function AddGDEntryPage() {
           </div>
         </div>
 
-        {/* ACK MODAL */}
         {isAckModalOpen && (
           <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-center justify-center p-4 animate-in fade-in duration-200">
-
             <div className="bg-white border-2 border-black w-full max-w-2xl shadow-2xl relative flex flex-col">
-
               <button
                 onClick={() => setIsAckModalOpen(false)}
                 className="absolute top-2 right-2 p-1 text-gray-400 hover:text-black hover:bg-gray-100 transition-colors z-20"
@@ -269,7 +263,6 @@ export default function AddGDEntryPage() {
               </div>
 
               <div className="p-8 space-y-6">
-
                 <div className="flex items-start gap-3 border-2 border-gray-200 bg-gray-50 p-6">
                   <input
                     type="checkbox"
@@ -295,7 +288,6 @@ export default function AddGDEntryPage() {
                   {loading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
                   {loading ? "Verifying..." : "Confirm & Submit"}
                 </button>
-
               </div>
             </div>
           </div>
