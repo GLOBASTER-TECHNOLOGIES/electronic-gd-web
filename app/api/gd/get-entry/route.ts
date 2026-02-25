@@ -82,7 +82,6 @@ export async function GET(request: NextRequest) {
         $project: {
           _id: 1,
           division: 1,
-          postName: 1, // ✅ Correct field
           postCode: 1, // ✅ Include postCode
           diaryDate: 1,
           pageSerialNo: 1,
