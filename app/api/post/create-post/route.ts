@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      postName,
       postCode,
       division,
       contactNumber,
@@ -20,7 +19,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // 1️⃣ Basic Validation
-    if (!postName || !postCode || !division || !password) {
+    if (!postCode || !division || !password) {
       return NextResponse.json(
         {
           success: false,
@@ -32,10 +31,7 @@ export async function POST(request: NextRequest) {
 
     // 2️⃣ Check for Duplicate Post
     const existingPost = await Post.findOne({
-      $or: [
-        { postCode: postCode.toUpperCase() },
-        { postName: postName.toUpperCase() },
-      ],
+      $or: [{ postCode: postCode.toUpperCase() }],
     });
 
     if (existingPost) {
@@ -74,7 +70,6 @@ export async function POST(request: NextRequest) {
 
     // 5️⃣ Create Post
     const newPost = await Post.create({
-      postName: postName.toUpperCase(),
       postCode: postCode.toUpperCase(),
       division: division.toUpperCase(),
       contactNumber,
@@ -90,7 +85,6 @@ export async function POST(request: NextRequest) {
         message: "RPF Post created successfully.",
         data: {
           id: newPost._id,
-          postName: newPost.postName,
           postCode: newPost.postCode,
           division: newPost.division,
           zone: newPost.zone,
