@@ -125,8 +125,7 @@ export default function OfficerList({ onEdit, postCode }: OfficerListProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 tracking-tight">Officer Directory</h3>
-          <p className="text-sm text-gray-500">Manage personnel and assignments.</p>
+          <h3 className="text-xl font-bold text-gray-900 tracking-tight">Officers List</h3>
         </div>
       </div>
 
