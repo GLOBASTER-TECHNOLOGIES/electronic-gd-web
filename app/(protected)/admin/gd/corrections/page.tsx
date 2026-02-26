@@ -13,6 +13,7 @@ interface ICorrection {
   diaryDate: string;
   correctedAt: string;
   correctionType: "EDIT" | "DELETE" | "LATE_ENTRY";
+  status: "PENDING" | "APPROVED" | "REJECTED"; // ✅ Added status to interface
   reason: string;
   previousData: {
     abstract?: string;
@@ -27,7 +28,7 @@ interface ICorrection {
     rank: string;
     forceNumber: string;
   };
-  approvedBy: {
+  approvedBy?: {
     name: string;
     rank: string;
     forceNumber: string;
@@ -73,6 +74,16 @@ function GDCorrectionsContent() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // ✅ Helper for Status Styles
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "APPROVED": return "bg-green-100 text-green-800 border-green-200";
+      case "REJECTED": return "bg-red-100 text-red-800 border-red-200";
+      case "PENDING": return "bg-amber-100 text-amber-800 border-amber-200";
+      default: return "bg-gray-100 text-gray-800 border-gray-200";
+    }
   };
 
   if (loading) {
@@ -121,7 +132,6 @@ function GDCorrectionsContent() {
             {id && (
               <div className="md:text-right">
                 <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Reference ID</p>
-                {/* Removed .toUpperCase() to keep original DB format */}
                 <p className="text-sm font-mono bg-white border border-gray-300 px-3 py-1.5 rounded shadow-sm text-gray-700">
                   {id}
                 </p>
@@ -150,18 +160,28 @@ function GDCorrectionsContent() {
           <div className="space-y-6">
             {corrections.map((log) => {
               const isDelete = log.correctionType === "DELETE";
+              
+              // ✅ Dynamic styling based on approval status
+              const isApproved = log.status === "APPROVED";
+              const isRejected = log.status === "REJECTED";
+              const isPending = log.status === "PENDING";
 
               return (
-                <div key={log._id} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <div key={log._id} className={`bg-white border ${isRejected ? 'border-gray-200 opacity-80' : 'border-gray-300'} rounded-xl shadow-sm overflow-hidden`}>
 
                   {/* Card Header */}
                   <div className="bg-gray-100 border-b border-gray-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
-                    <div className="flex items-center gap-4">
-                      <span className={`px-3 py-1 text-xs font-bold uppercase tracking-widest rounded ${isDelete ? "bg-red-100 text-red-800 border border-red-200" : "bg-black text-white"
-                        }`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded ${isDelete ? "bg-red-100 text-red-800 border border-red-200" : "bg-black text-white"}`}>
                         {log.correctionType}
                       </span>
-                      <h2 className="text-lg font-bold text-gray-900">Entry #{log.entryNo}</h2>
+                      
+                      {/* ✅ Status Badge added here */}
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded border ${getStatusStyles(log.status)}`}>
+                        {log.status}
+                      </span>
+
+                      <h2 className="text-lg font-bold text-gray-900 ml-2">Entry #{log.entryNo}</h2>
                     </div>
                     <div className="text-sm text-gray-600 font-medium flex items-center gap-1.5 bg-white px-3 py-1 rounded border border-gray-200">
                       <Clock size={14} className="text-gray-400" />
@@ -179,42 +199,46 @@ function GDCorrectionsContent() {
                   {log.correctionType !== "LATE_ENTRY" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200">
 
-                      {/* Original State */}
-                      <div className="p-6 bg-red-50/30">
-                        <h3 className="flex items-center gap-2 text-xs font-bold text-red-600 uppercase tracking-widest mb-4">
-                          <span className="w-2 h-2 rounded-full bg-red-500"></span> Original Data (Overwritten)
+                      {/* Left: Original State */}
+                      <div className="p-6 bg-slate-50/50">
+                        <h3 className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
+                          <span className="w-2 h-2 rounded-full bg-slate-400"></span> Original Data (Prior to Request)
                         </h3>
                         <div className="space-y-4">
                           <div>
                             <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Abstract</span>
-                            <div className="bg-white border border-gray-200 p-3 rounded text-sm text-gray-700 min-h-[3rem]">
+                            <div className="bg-white border border-gray-200 p-3 rounded text-sm text-gray-600 min-h-[3rem]">
                               {log.previousData?.abstract || "N/A"}
                             </div>
                           </div>
                           <div>
                             <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Details</span>
-                            <div className="bg-white border border-gray-200 p-3 rounded text-sm text-gray-700 whitespace-pre-wrap min-h-[5rem]">
+                            <div className="bg-white border border-gray-200 p-3 rounded text-sm text-gray-600 whitespace-pre-wrap min-h-[5rem]">
                               {log.previousData?.details || "N/A"}
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Updated State */}
-                      <div className="p-6 bg-green-50/30">
-                        <h3 className="flex items-center gap-2 text-xs font-bold text-green-600 uppercase tracking-widest mb-4">
-                          <span className="w-2 h-2 rounded-full bg-green-500"></span> Current Data (Active)
+                      {/* Right: Updated/Proposed State */}
+                      <div className={`p-6 ${isApproved ? 'bg-green-50/30' : isRejected ? 'bg-red-50/20' : 'bg-amber-50/20'}`}>
+                        <h3 className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest mb-4 ${isApproved ? 'text-green-600' : isRejected ? 'text-red-600' : 'text-amber-600'}`}>
+                          <span className={`w-2 h-2 rounded-full ${isApproved ? 'bg-green-500' : isRejected ? 'bg-red-500' : 'bg-amber-500'}`}></span> 
+                          {/* ✅ Dynamic Header Label based on status */}
+                          {isApproved && "Applied Amendment (Active)"}
+                          {isRejected && "Proposed Amendment (Rejected)"}
+                          {isPending && "Proposed Amendment (Pending Review)"}
                         </h3>
                         <div className="space-y-4">
                           <div>
                             <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Abstract</span>
-                            <div className="bg-white border border-green-200 p-3 rounded text-sm text-gray-900 font-medium min-h-[3rem]">
+                            <div className={`bg-white border p-3 rounded text-sm min-h-[3rem] ${isApproved ? 'border-green-200 text-gray-900 font-medium' : isRejected ? 'border-red-100 text-gray-500 line-through' : 'border-amber-200 text-gray-800'}`}>
                               {log.newData?.abstract || "N/A"}
                             </div>
                           </div>
                           <div>
                             <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Details</span>
-                            <div className="bg-white border border-green-200 p-3 rounded text-sm text-gray-900 font-medium whitespace-pre-wrap min-h-[5rem]">
+                            <div className={`bg-white border p-3 rounded text-sm whitespace-pre-wrap min-h-[5rem] ${isApproved ? 'border-green-200 text-gray-900 font-medium' : isRejected ? 'border-red-100 text-gray-500 line-through' : 'border-amber-200 text-gray-800'}`}>
                               {log.newData?.details || "N/A"}
                             </div>
                           </div>
@@ -231,16 +255,22 @@ function GDCorrectionsContent() {
                       <p className="text-sm font-bold text-gray-900">{log.requestedBy?.rank} {log.requestedBy?.name}</p>
                       <p className="text-xs text-gray-500 font-mono mt-0.5">ID: {log.requestedBy?.forceNumber}</p>
                     </div>
-                    <div>
-                      <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Authorized By</span>
-                      <p className="text-sm font-bold text-gray-900">{log.approvedBy?.rank} {log.approvedBy?.name}</p>
-                      <p className="text-xs text-gray-500 font-mono mt-0.5">ID: {log.approvedBy?.forceNumber}</p>
-                      {log.approvedBy?.approvedAt && (
-                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1.5">
-                          Signed: {formatDate(log.approvedBy.approvedAt)}
-                        </p>
-                      )}
-                    </div>
+                    
+                    {/* Only show authorization if it exists */}
+                    {log.approvedBy && (
+                      <div>
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                          {isRejected ? 'Rejected By' : 'Authorized By'}
+                        </span>
+                        <p className="text-sm font-bold text-gray-900">{log.approvedBy.rank} {log.approvedBy.name}</p>
+                        <p className="text-xs text-gray-500 font-mono mt-0.5">ID: {log.approvedBy.forceNumber}</p>
+                        {log.approvedBy.approvedAt && (
+                          <p className="text-[10px] text-gray-400 font-bold uppercase mt-1.5">
+                            Signed: {formatDate(log.approvedBy.approvedAt)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                 </div>
