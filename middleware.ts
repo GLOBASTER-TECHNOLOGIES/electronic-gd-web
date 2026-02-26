@@ -17,6 +17,13 @@ export async function middleware(request: NextRequest) {
   );
 
   /* ==========================================================
+      ✅ ALLOW ALL API ROUTES (IMPORTANT FIX)
+  ========================================================== */
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  /* ==========================================================
       🛡️ CASE 1: UN-AUTHENTICATED ACCESS
   ========================================================== */
   if (!isPublicRoute && !token) {
@@ -28,14 +35,10 @@ export async function middleware(request: NextRequest) {
   ========================================================== */
   if (isPublicRoute && token) {
     if (postToken) {
-      return NextResponse.redirect(
-        new URL("/post/dashboard", request.url)
-      );
+      return NextResponse.redirect(new URL("/post/dashboard", request.url));
     }
     if (officerToken || visitingToken) {
-      return NextResponse.redirect(
-        new URL("/gd/add-entry", request.url)
-      );
+      return NextResponse.redirect(new URL("/gd/add-entry", request.url));
     }
   }
 
@@ -44,15 +47,13 @@ export async function middleware(request: NextRequest) {
   ========================================================== */
   if (pathname.startsWith("/post") && !postToken) {
     if (officerToken || visitingToken) {
-      return NextResponse.redirect(
-        new URL("/gd/add-entry", request.url)
-      );
+      return NextResponse.redirect(new URL("/gd/add-entry", request.url));
     }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   /* ==========================================================
-      👑 CASE 4: ADMIN RANK VERIFICATION (FIXED)
+      👑 CASE 4: ADMIN ROUTE PROTECTION
   ========================================================== */
   if (pathname.startsWith(adminRoutePrefix)) {
     try {
@@ -65,14 +66,10 @@ export async function middleware(request: NextRequest) {
       });
 
       if (!response.ok) {
-        return NextResponse.redirect(
-          new URL("/login", request.url)
-        );
+        return NextResponse.redirect(new URL("/login", request.url));
       }
 
       const userData = await response.json();
-
-      // ✅ FIX: rank is inside user object
       const rank = userData?.user?.rank;
 
       if (!rank || rank.toLowerCase() !== "admin") {
@@ -86,15 +83,11 @@ export async function middleware(request: NextRequest) {
             new URL("/gd/add-entry", request.url)
           );
 
-        return NextResponse.redirect(
-          new URL("/login", request.url)
-        );
+        return NextResponse.redirect(new URL("/login", request.url));
       }
     } catch (error) {
       console.error("Admin verification failed:", error);
-      return NextResponse.redirect(
-        new URL("/login", request.url)
-      );
+      return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
@@ -102,5 +95,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
