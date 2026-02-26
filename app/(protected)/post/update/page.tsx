@@ -66,63 +66,63 @@ export default function CorrectionPage() {
   // --- LOGIC: SEARCH ---
   // --- LOGIC: SEARCH ---
   const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchParams.entryNo) return;
+  e.preventDefault();
+  if (!searchParams.entryNo) return;
 
-    // 3. Ensure we actually have a postCode before fetching
-    if (!postCodeFromUrl) {
-      setError("No Post Code found in URL. Please navigate from the dashboard.");
-      return;
+  if (!postCodeFromUrl) {
+    setError("No Post Code found in URL. Please navigate from the dashboard.");
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const query = new URLSearchParams({
+      postCode: postCodeFromUrl,
+      date: searchParams.date,
+      mode: "post" // ✅ Added flag
+    }).toString();
+
+    const res = await fetch(`/api/gd/get-entry?${query}`);
+
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error("Server did not return JSON. Check API route.");
     }
 
-    setLoading(true);
-    setError("");
+    const result = await res.json();
 
-    try {
-      // 4. Use the postCode extracted from the URL!
-      const query = new URLSearchParams({
-        postCode: postCodeFromUrl,
-        date: searchParams.date
-      }).toString();
-
-      const res = await fetch(`/api/gd/get-entry?${query}`);
-
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server did not return JSON. Check API route.");
-      }
-
-      const result = await res.json();
-
-      if (!result.success) throw new Error(result.message || "Failed to fetch");
-      if (!result.data) {
-        throw new Error(`No General Diary found for ${postCodeFromUrl} on this date.`);
-      }
-
-      const gdDoc: IGDDocument = result.data;
-      const targetEntryNo = parseInt(searchParams.entryNo);
-      const foundEntry = gdDoc.entries.find((entry) => entry.entryNo === targetEntryNo);
-
-      if (!foundEntry) {
-        throw new Error(`Entry #${targetEntryNo} does not exist in this GD.`);
-      }
-
-      setParentGD(gdDoc);
-      setSelectedEntry(foundEntry);
-      setFormData({
-        abstract: foundEntry.abstract,
-        details: foundEntry.details,
-        reason: ""
-      });
-      setView("CORRECT");
-
-    } catch (err: any) {
-      setError(err.message);
-      console.error("Search Error:", err);
-    } finally {
-      setLoading(false);
+    if (!result.success) throw new Error(result.message || "Failed to fetch");
+    if (!result.data) {
+      throw new Error(`No General Diary found for ${postCodeFromUrl} on this date.`);
     }
-  };
+
+    const gdDoc: IGDDocument = result.data;
+    const targetEntryNo = parseInt(searchParams.entryNo);
+    const foundEntry = gdDoc.entries.find((entry) => entry.entryNo === targetEntryNo);
+
+    if (!foundEntry) {
+      throw new Error(`Entry #${targetEntryNo} does not exist in this GD.`);
+    }
+
+    setParentGD(gdDoc);
+    setSelectedEntry(foundEntry);
+    setFormData({
+      abstract: foundEntry.abstract,
+      details: foundEntry.details,
+      reason: ""
+    });
+
+    setView("CORRECT");
+
+  } catch (err: any) {
+    setError(err.message);
+    console.error("Search Error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // --- LOGIC: SUBMIT ---
   const handleSubmitCorrection = async (e: React.FormEvent) => {
@@ -147,13 +147,13 @@ export default function CorrectionPage() {
           name: adminData.reqName,
           rank: adminData.reqRank,
           forceNumber: adminData.reqForceNo,
-          officerId: "65c4a7f0e5b9c02d12345678"
+          // officerId: "65c4a7f0e5b9c02d12345678"
         },
         approvedBy: {
           name: adminData.appName,
           rank: adminData.appRank,
           forceNumber: adminData.appForceNo,
-          officerId: "65c4a7f0e5b9c02d87654321",
+          // officerId: "65c4a7f0e5b9c02d87654321",
         }
       };
 
