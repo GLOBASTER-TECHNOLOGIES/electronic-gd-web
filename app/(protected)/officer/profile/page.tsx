@@ -8,7 +8,8 @@ import {
   FilePlus,
   BookOpen,
   LogOut,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react";
 
 interface UserProfile {
@@ -18,7 +19,7 @@ interface UserProfile {
   forceNumber: string;
   division: string;
   postName: string;
-  postCode: string; // ✅ ADDED
+  postCode: string;
 }
 
 export default function ProfilePage() {
@@ -31,7 +32,7 @@ export default function ProfilePage() {
     const fetchUser = async () => {
       try {
         const res = await axios.get("/api/auth/me", {
-          params: { fields: "name,rank,forceNumber,division,postName,postCode" } // ✅ ADDED postCode
+          params: { fields: "name,rank,forceNumber,division,postName,postCode" }
         });
         setUser(res.data.user);
       } catch {
@@ -65,9 +66,10 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  const isAdmin = user.rank?.toUpperCase() === "ADMIN"; // ✅ Rank check
+
   return (
     <div className="min-h-screen text-black bg-[#eef0f3] flex items-center justify-center px-4">
-
       <div className="w-full max-w-xl bg-white border border-gray-300 shadow-sm p-8">
 
         {/* Header */}
@@ -121,7 +123,6 @@ export default function ProfilePage() {
             Add GD Entry
           </button>
 
-          {/* ✅ UPDATED BUTTON */}
           <button
             onClick={() => router.push(`view-gd?postCode=${user.postCode}`)}
             className="w-full border border-black py-3 text-xs font-bold uppercase tracking-widest hover:bg-gray-100 transition flex items-center justify-center gap-2"
@@ -130,12 +131,27 @@ export default function ProfilePage() {
             View GD Entries
           </button>
 
+          {/* ✅ NEW ADMIN BUTTON */}
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/admin")}
+              className="w-full bg-slate-900 text-white py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-700 transition flex items-center justify-center gap-2"
+            >
+              <Settings size={16} />
+              Go to Admin Panel
+            </button>
+          )}
+
           <button
             onClick={handleLogout}
             disabled={loggingOut}
             className="w-full border border-red-600 text-red-600 py-3 text-xs font-bold uppercase tracking-widest hover:bg-red-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loggingOut ? <Loader2 className="animate-spin" size={16} /> : <LogOut size={16} />}
+            {loggingOut ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <LogOut size={16} />
+            )}
             {loggingOut ? "Logging Out..." : "Logout"}
           </button>
 
