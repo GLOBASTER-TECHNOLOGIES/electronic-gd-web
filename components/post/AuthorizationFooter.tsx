@@ -55,9 +55,7 @@ export default function AuthorizationFooter({
 
         {/* ADMIN PROTOTYPE INPUTS */}
         <div className="bg-white border border-slate-200 rounded-md p-5 shadow-sm">
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <FileBadge className="w-4 h-4" /> Administrative Control
-          </h4>
+    
           
           <div className="space-y-6">
             {/* REQUESTED BY */}
@@ -89,7 +87,7 @@ export default function AuthorizationFooter({
             </div>
 
             {/* FORWARDED BY */}
-            <div className="pt-2 border-t border-slate-100">
+            {/* <div className="pt-2 border-t border-slate-100">
               <div className="text-[10px] font-bold text-slate-500 mb-2 mt-2 tracking-wider">FORWARDED BY</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input 
@@ -114,7 +112,7 @@ export default function AuthorizationFooter({
                   className="text-xs p-2.5 border border-slate-200 rounded bg-slate-50 focus:border-slate-400 outline-none w-full" 
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -139,7 +137,7 @@ export default function AuthorizationFooter({
             {isSubmitting ? "Processing..." : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                Sign & Update GD
+                Request for correction
               </>
             )}
           </button>
