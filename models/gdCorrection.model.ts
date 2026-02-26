@@ -1,11 +1,10 @@
-// gdCorrection.model.ts
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 /* =======================================
    1. INTERFACES (Type Definitions)
 ======================================= */
 
-interface ISignatureSnapshot {
+export interface ISignatureSnapshot {
   officerId: mongoose.Types.ObjectId;
   officerName: string;
   rank: string;
@@ -14,23 +13,15 @@ interface ISignatureSnapshot {
   signedAt: Date;
 }
 
-export interface ICorrectionLog extends Document {
+// Interface for a single correction request/log
+export interface ICorrectionLogEntry {
+  _id?: mongoose.Types.ObjectId;
   originalEntryId: mongoose.Types.ObjectId;
-  dailyGDId: mongoose.Types.ObjectId;
-
-  // Snapshot Context
   entryNo: number;
-  postCode: string;
-  diaryDate: Date;
 
-  // Correction Meta
-  correctedAt: Date;
   correctionType: "EDIT" | "DELETE" | "LATE_ENTRY";
-
-  // Approval Status
   status: "PENDING" | "APPROVED" | "REJECTED";
 
-  // History & Current Data
   previousData: {
     abstract?: string;
     details?: string;
@@ -42,7 +33,6 @@ export interface ICorrectionLog extends Document {
     details?: string;
   };
 
-  // Approval Chain
   reason: string;
 
   requestedBy: {
@@ -52,43 +42,29 @@ export interface ICorrectionLog extends Document {
     officerId: mongoose.Types.ObjectId;
   };
 
-  approvedBy?: {
-    forceNumber: string;
-    name: string;
-    rank: string;
-    officerId: mongoose.Types.ObjectId;
-    approvedAt: Date;
-  };
+  correctedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
+// Interface for the main document holding the array
+export interface IGdCorrection extends Document {
+  dailyGDId: mongoose.Types.ObjectId;
+  postCode: string;
+  diaryDate: Date;
+  history: ICorrectionLogEntry[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 /* =======================================
-   2. SCHEMA DEFINITION
+   2. SUB-DOCUMENT SCHEMA (The Array Items)
 ======================================= */
 
-const GdCorrectionSchema = new Schema<ICorrectionLog>(
+const CorrectionLogEntrySchema = new Schema<ICorrectionLogEntry>(
   {
-    /* ===== LINKS ===== */
-    originalEntryId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-    },
-
-    dailyGDId: {
-      type: Schema.Types.ObjectId,
-      ref: "GeneralDiary",
-      required: true,
-    },
-
-    /* ===== SNAPSHOT CONTEXT ===== */
+    originalEntryId: { type: Schema.Types.ObjectId, required: true },
     entryNo: { type: Number, required: true },
-    postCode: { type: String, required: true },
-    diaryDate: { type: Date, required: true },
-
-    /* ===== CORRECTION META ===== */
-    correctedAt: { type: Date, default: Date.now },
 
     correctionType: {
       type: String,
@@ -100,10 +76,8 @@ const GdCorrectionSchema = new Schema<ICorrectionLog>(
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED"],
       default: "PENDING",
-      index: true,
     },
 
-    /* ===== 1. BEFORE (History Snapshot) ===== */
     previousData: {
       abstract: String,
       details: String,
@@ -117,19 +91,12 @@ const GdCorrectionSchema = new Schema<ICorrectionLog>(
       },
     },
 
-    /* ===== 2. AFTER (Requested Change) ===== */
     newData: {
       abstract: String,
       details: String,
     },
 
-    /* ===== 3. APPROVAL CHAIN ===== */
-
-    reason: {
-      type: String,
-      required: true,
-      minlength: 5,
-    },
+    reason: { type: String, required: true, minlength: 5 },
 
     requestedBy: {
       forceNumber: { type: String, required: true },
@@ -142,46 +109,55 @@ const GdCorrectionSchema = new Schema<ICorrectionLog>(
       },
     },
 
-    // Optional until admin processes request
-    approvedBy: {
-      forceNumber: { type: String },
-      name: { type: String },
-      rank: { type: String },
-      officerId: {
-        type: Schema.Types.ObjectId,
-        ref: "Officer",
-      },
-      approvedAt: { type: Date },
-    },
+    correctedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { _id: true, timestamps: true }, // Keeps track of when the specific request was made/updated
 );
 
 /* =======================================
-   3. INDEXES (Performance Critical)
+   3. MAIN DOCUMENT SCHEMA (The Container)
 ======================================= */
 
-// 1️⃣ Dashboard Search (Post + Date)
-GdCorrectionSchema.index({ postCode: 1, diaryDate: -1 });
+const GdCorrectionSchema = new Schema<IGdCorrection>(
+  {
+    dailyGDId: {
+      type: Schema.Types.ObjectId,
+      ref: "GeneralDiary",
+      required: true,
+      unique: true, // ✅ Ensures only ONE correction document per daily GD
+    },
 
-// 2️⃣ Entry History Lookup
-GdCorrectionSchema.index({ dailyGDId: 1, entryNo: 1 });
+    postCode: { type: String, required: true },
+    diaryDate: { type: Date, required: true },
 
-// 3️⃣ Officer Audit Trail
-GdCorrectionSchema.index({ "requestedBy.forceNumber": 1 });
-
-// 4️⃣ Direct Entry Link Lookup
-GdCorrectionSchema.index({ originalEntryId: 1 });
-
-// 5️⃣ Status Filter (Admin Panel)
-GdCorrectionSchema.index({ status: 1 });
+    // ✅ THE ARRAY: Keeps all corrections for this GD in one place
+    history: { type: [CorrectionLogEntrySchema], default: [] },
+  },
+  { timestamps: true },
+);
 
 /* =======================================
-   4. MODEL EXPORT
+   4. INDEXES (Critical for nested arrays)
 ======================================= */
 
-const GdCorrection: Model<ICorrectionLog> =
+// 1️⃣ Find the correction container by post and date quickly
+GdCorrectionSchema.index({ postCode: 1, diaryDate: -1 });
+
+// 2️⃣ Quick lookup to see if a specific entry has a correction pending/approved
+GdCorrectionSchema.index({ "history.originalEntryId": 1 });
+
+// 3️⃣ Status Filter (Admin Panel) - Finds documents that contain pending corrections
+GdCorrectionSchema.index({ "history.status": 1 });
+
+// 4️⃣ Officer Audit Trail - Finds all corrections requested by a specific officer
+GdCorrectionSchema.index({ "history.requestedBy.forceNumber": 1 });
+
+/* =======================================
+   5. MODEL EXPORT
+======================================= */
+
+const GdCorrection: Model<IGdCorrection> =
   mongoose.models.GdCorrection ||
-  mongoose.model<ICorrectionLog>("GdCorrection", GdCorrectionSchema);
+  mongoose.model<IGdCorrection>("GdCorrection", GdCorrectionSchema);
 
 export default GdCorrection;
