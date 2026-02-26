@@ -115,7 +115,7 @@ export const generateGDPDF = async (gd: GDData) => {
   const startY = 110;
 
   doc.setFontSize(9 * SCALE);
-  doc.text("डिभीजन/जिला", 40, startY - 12);
+  doc.text("डिवीजन / जिला", 40, startY - 12);
   doc.text("Division/District", 40, startY);
 
   doc.setFontSize(11 * SCALE);
@@ -142,7 +142,7 @@ export const generateGDPDF = async (gd: GDData) => {
 
   // --- 4. THE TABLE ---
   const tableColumn = [
-    { header: "दिनांक व समय\nDate and Time", dataKey: "dateTime" },
+    { header: "दिनांक एवं समय\nDate and Time", dataKey: "dateTime" },
     { header: "प्रविष्टि सं.\nEntry No.", dataKey: "entryNo" },
     { header: "सार\nAbstract", dataKey: "abstract" },
     { header: "रिपोर्ट का विवरण\nDetails of Report", dataKey: "details" },
