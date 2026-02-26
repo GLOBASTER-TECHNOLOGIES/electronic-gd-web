@@ -104,10 +104,10 @@ export default function PostsDashboard() {
               <Building2 className="text-slate-900" size={32} />
               <div>
                 <h1 className="text-2xl font-bold uppercase tracking-tight text-slate-900">
-                  Station Command Dashboard
+                  Post Dashboard
                 </h1>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  Railway Protection Force • Official Use Only
+                  Railway Protection Force
                 </p>
               </div>
             </div>
@@ -121,7 +121,6 @@ export default function PostsDashboard() {
               </div>
 
               <div className="flex items-center gap-3 border-l border-gray-200 pl-4 md:pl-8">
-                <ShieldCheck className="text-emerald-600" size={24} />
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 border border-red-100 rounded text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition-all shadow-sm"
@@ -147,7 +146,7 @@ export default function PostsDashboard() {
               <div className="bg-white border border-gray-300 shadow-sm overflow-hidden">
                 <div className="bg-slate-900 text-white px-6 py-2 text-[10px] font-bold uppercase tracking-widest flex justify-between">
                   <span>Post Assignment Details</span>
-                  <span>Unit Code: {post.postCode}</span>
+                  <span>Post Code: {post.postCode}</span>
                 </div>
 
                 <div className="p-6 md:p-10">
@@ -155,7 +154,7 @@ export default function PostsDashboard() {
                     <div className="md:col-span-2 space-y-6">
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">
-                          Station Name
+                          Division Name
                         </label>
                         <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tight">
                           {post.postName}
@@ -176,7 +175,7 @@ export default function PostsDashboard() {
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">
-                            Jurisdiction Address
+                            Post Address
                           </label>
                           <p className="text-sm font-medium text-slate-600 flex items-start gap-2 max-w-xs">
                             <MapPin size={16} className="mt-1 shrink-0" /> {post.address}
@@ -256,7 +255,7 @@ export default function PostsDashboard() {
                     </div>
                     <div className="text-left">
                       <h4 className="text-sm font-bold uppercase text-slate-900">
-                        Create Officer
+                        Manage Officer
                       </h4>
                       <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
                         Register New Officer
