@@ -8,9 +8,9 @@ export interface IAdminData {
   reqName: string;
   reqRank: string;
   reqForceNo: string;
-  appName: string;
-  appRank: string;
-  appForceNo: string;
+  fwdName: string;
+  fwdRank: string;
+  fwdForceNo: string;
 }
 
 interface AuthorizationFooterProps {
@@ -36,7 +36,9 @@ export default function AuthorizationFooter({
 }: AuthorizationFooterProps) {
   return (
     <div className="bg-gray-50 border-t border-gray-200 p-6 md:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+      {/* Changed to flex-col to prevent side-by-side layout and improve flow */}
+      <div className="flex flex-col gap-8 mb-6">
+        
         {/* REASON */}
         <div className="flex flex-col">
           <label className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase mb-2">
@@ -47,44 +49,92 @@ export default function AuthorizationFooter({
             value={formData.reason}
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
             placeholder="State official reason (e.g. Typographical Error, Factual Update)..."
-            className="w-full flex-1 text-sm border border-gray-300 rounded-md p-3 focus:border-amber-500 outline-none h-32"
+            className="w-full text-sm border border-gray-300 rounded-md p-3 focus:border-amber-500 outline-none h-24 resize-y"
           />
         </div>
 
         {/* ADMIN PROTOTYPE INPUTS */}
-        <div className="bg-white border border-slate-200 rounded-md p-4">
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <FileBadge className="w-3 h-3" /> Administrative Control (Prototype)
+        <div className="bg-white border border-slate-200 rounded-md p-5 shadow-sm">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <FileBadge className="w-4 h-4" /> Administrative Control
           </h4>
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-3 text-[10px] font-bold text-slate-500">REQUESTED BY</div>
-              <input type="text" placeholder="Rank" value={adminData.reqRank} onChange={e => setAdminData({ ...adminData, reqRank: e.target.value })} className="text-xs p-2 border rounded" />
-              <input type="text" placeholder="Name" value={adminData.reqName} onChange={e => setAdminData({ ...adminData, reqName: e.target.value })} className="col-span-2 text-xs p-2 border rounded" />
-              <input type="text" placeholder="Force No" value={adminData.reqForceNo} onChange={e => setAdminData({ ...adminData, reqForceNo: e.target.value })} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
+          
+          <div className="space-y-6">
+            {/* REQUESTED BY */}
+            <div>
+              <div className="text-[10px] font-bold text-slate-500 mb-2 tracking-wider">REQUESTED BY</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input 
+                  type="text" 
+                  placeholder="Rank" 
+                  value={adminData.reqRank || ""} 
+                  onChange={e => setAdminData({ ...adminData, reqRank: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded focus:border-slate-400 outline-none w-full" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Name" 
+                  value={adminData.reqName || ""} 
+                  onChange={e => setAdminData({ ...adminData, reqName: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded focus:border-slate-400 outline-none w-full" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Force No" 
+                  value={adminData.reqForceNo || ""} 
+                  onChange={e => setAdminData({ ...adminData, reqForceNo: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded bg-slate-50 focus:border-slate-400 outline-none w-full" 
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-3 text-[10px] font-bold text-slate-500 mt-1">APPROVED BY (ADMIN)</div>
-              <input type="text" placeholder="Rank" value={adminData.appRank} onChange={e => setAdminData({ ...adminData, appRank: e.target.value })} className="text-xs p-2 border rounded" />
-              <input type="text" placeholder="Name" value={adminData.appName} onChange={e => setAdminData({ ...adminData, appName: e.target.value })} className="col-span-2 text-xs p-2 border rounded" />
-              <input type="text" placeholder="Force No" value={adminData.appForceNo} onChange={e => setAdminData({ ...adminData, appForceNo: e.target.value })} className="col-span-3 text-xs p-2 border rounded bg-slate-50" />
+
+            {/* FORWARDED BY */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="text-[10px] font-bold text-slate-500 mb-2 mt-2 tracking-wider">FORWARDED BY</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input 
+                  type="text" 
+                  placeholder="Rank" 
+                  value={adminData.fwdRank || ""} 
+                  onChange={e => setAdminData({ ...adminData, fwdRank: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded focus:border-slate-400 outline-none w-full" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Name" 
+                  value={adminData.fwdName || ""} 
+                  onChange={e => setAdminData({ ...adminData, fwdName: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded focus:border-slate-400 outline-none w-full" 
+                />
+                <input 
+                  type="text" 
+                  placeholder="Force No" 
+                  value={adminData.fwdForceNo || ""} 
+                  onChange={e => setAdminData({ ...adminData, fwdForceNo: e.target.value })} 
+                  className="text-xs p-2.5 border border-slate-200 rounded bg-slate-50 focus:border-slate-400 outline-none w-full" 
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-        <div className="text-[10px] text-gray-400 flex items-center gap-1">
+      <div className="flex flex-col-reverse sm:flex-row items-center justify-between pt-4 border-t border-gray-200 gap-4">
+        <div className="text-[10px] text-gray-400 flex items-center gap-1 w-full sm:w-auto">
           <Fingerprint className="w-3 h-3" /> Ref: {entryId}
         </div>
-        <div className="flex gap-3">
-          <button type="button" onClick={onCancel} className="px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded transition-colors">
+        <div className="flex w-full sm:w-auto gap-3">
+          <button 
+            type="button" 
+            onClick={onCancel} 
+            className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded transition-colors"
+          >
             Cancel
           </button>
           <button
             onClick={onSubmit}
             disabled={isSubmitting || formData.reason.length < 5}
-            className="px-8 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 sm:flex-none px-8 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {isSubmitting ? "Processing..." : (
               <>
