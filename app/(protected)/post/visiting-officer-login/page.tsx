@@ -58,7 +58,6 @@ function LoginForm() {
 
         {/* Official Header Strip */}
         <div className="bg-slate-900 p-6 text-center text-white">
-          <Shield className="mx-auto text-blue-400 mb-2" size={28} />
           <h1 className="text-lg font-bold uppercase tracking-tight">
             Visiting Officer Entry
           </h1>
@@ -72,7 +71,7 @@ function LoginForm() {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-              Force Number (Individual)
+              Force Number
             </label>
             <input
               type="text"
