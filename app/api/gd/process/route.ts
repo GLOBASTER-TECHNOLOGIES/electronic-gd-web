@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     
-    // ✅ 1. Cleaned up destructuring (No more forwardedBy, approvedBy, or adminInfo)
+    // 1. Cleaned up destructuring
     const { action, containerId, logId, dailyGDId, originalEntryId } = body;
 
     // 2. Validate payload
@@ -30,15 +30,18 @@ export async function POST(req: NextRequest) {
     const correctionDoc = await GdCorrection.findById(containerId).session(session);
     if (!correctionDoc) throw new Error("Correction document not found.");
 
-    // 4. Extract the specific pending log from the array
-    const logEntry = correctionDoc.history.id(logId);
+    // ✅ 4. FIX: Use standard JavaScript .find() instead of Mongoose .id()
+    const logEntry = correctionDoc.history.find(
+      (entry: any) => entry._id.toString() === logId
+    );
+    
     if (!logEntry) throw new Error("Specific correction request not found.");
 
     if (logEntry.status !== "PENDING") {
       throw new Error(`This request has already been processed (${logEntry.status}).`);
     }
 
-    // ✅ 5. Update the Audit Log Status ONLY (Removed approvedBy object)
+    // 5. Update the Audit Log Status ONLY
     logEntry.status = action === "APPROVE" ? "APPROVED" : "REJECTED";
 
     // Save the container update
@@ -49,7 +52,11 @@ export async function POST(req: NextRequest) {
       const gd = await GeneralDiary.findById(dailyGDId).session(session);
       if (!gd) throw new Error("General Diary not found.");
 
-      const gdEntry = gd.entries.id(originalEntryId);
+      // ✅ FIX: Use standard JavaScript .find() here as well
+      const gdEntry = gd.entries.find(
+        (entry: any) => entry._id.toString() === originalEntryId
+      );
+      
       if (!gdEntry) throw new Error("Original GD Entry not found.");
 
       // Overwrite the original text with the new data stored in the log
