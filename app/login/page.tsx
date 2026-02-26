@@ -63,9 +63,7 @@ export default function LoginPage() {
 
         {/* Header - Navy Blue for RPF Theme */}
         <div className="bg-blue-900 p-6 text-center">
-          <div className="mx-auto w-14 h-14 bg-white rounded-full flex items-center justify-center mb-3 shadow-md">
-            <FaShieldAlt className="text-3xl text-blue-900" />
-          </div>
+          
           <h1 className="text-xl font-bold text-white tracking-wide">RPF OFFICIAL LOGIN</h1>
           <p className="text-blue-200 text-xs mt-1">Railway Protection Force Portal</p>
         </div>
