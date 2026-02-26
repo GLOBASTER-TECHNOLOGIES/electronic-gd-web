@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
     /* ===============================
        1️⃣ VALIDATION
     =============================== */
-
     if (!originalEntryId || !dailyGDId)
       throw new Error("Missing entry reference.");
 
@@ -34,13 +33,29 @@ export async function POST(req: NextRequest) {
     if (!reason || reason.length < 5)
       throw new Error("Reason must be at least 5 characters.");
 
+    if (!requestedBy) {
+      throw new Error("Authorization details (Requested By) are missing.");
+    }
+
     /* ===============================
-       2️⃣ FETCH GD + ENTRY
+       2️⃣ FETCH GD & ENFORCE 34-HOUR LOCK
     =============================== */
 
     const gd = await GeneralDiary.findById(dailyGDId);
     if (!gd) throw new Error("General Diary not found.");
 
+    // ✅ ENFORCE 34-HOUR RULE
+    const now = new Date();
+    const gdCreationTime = new Date(gd.createdAt); 
+    const hoursSinceCreation = (now.getTime() - gdCreationTime.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSinceCreation > 34) {
+      throw new Error(
+        `Time limit exceeded. Correction requests cannot be made after 34 hours. (This diary is currently ${Math.floor(hoursSinceCreation)} hours old).`
+      );
+    }
+
+    // Now find the specific entry
     const entry = gd.entries.id(originalEntryId);
     if (!entry) throw new Error("Entry not found.");
 
@@ -49,25 +64,28 @@ export async function POST(req: NextRequest) {
     =============================== */
 
     const existingPending = await GdCorrection.findOne({
-      originalEntryId,
-      status: "PENDING",
+      dailyGDId: gd._id,
+      history: {
+        $elemMatch: {
+          originalEntryId: originalEntryId,
+          status: "PENDING",
+        },
+      },
     });
 
     if (existingPending) {
-      throw new Error("A pending correction request already exists.");
+      throw new Error(
+        "A pending correction request already exists for this entry. Please wait for admin review.",
+      );
     }
 
     /* ===============================
-       4️⃣ CREATE CORRECTION REQUEST
+       4️⃣ UPSERT CORRECTION REQUEST
     =============================== */
 
-    const correction = await GdCorrection.create({
+    const newLogEntry = {
       originalEntryId: entry._id,
-      dailyGDId: gd._id,
       entryNo: entry.entryNo,
-      postCode: gd.postCode,
-      diaryDate: gd.diaryDate,
-
       correctionType,
       status: "PENDING",
 
@@ -88,14 +106,38 @@ export async function POST(req: NextRequest) {
         forceNumber: requestedBy.forceNumber,
         name: requestedBy.name,
         rank: requestedBy.rank,
-        officerId: new mongoose.Types.ObjectId(), // replace with real logged-in ID later
+        officerId: new mongoose.Types.ObjectId(), // TODO: Replace with logged-in user ID
       },
-    });
+    };
+
+    // Find the container for this GD, or create it, and push the new log
+    const correctionDoc = await GdCorrection.findOneAndUpdate(
+      { dailyGDId: gd._id }, 
+      {
+        $setOnInsert: {
+          postCode: gd.postCode,
+          diaryDate: gd.diaryDate,
+        },
+        $push: { history: newLogEntry },
+      },
+      {
+        new: true, 
+        upsert: true, 
+        runValidators: true,
+      }
+    );
+
+    // Safe extraction: Won't crash if history is undefined on first creation
+    const newlyAddedCorrectionId =
+      correctionDoc?.history && correctionDoc.history.length > 0
+        ? correctionDoc.history[correctionDoc.history.length - 1]._id
+        : null;
 
     return NextResponse.json({
       success: true,
-      message: "Correction request submitted for admin approval.",
-      correctionId: correction._id,
+      message: "Correction request submitted successfully for admin approval.",
+      correctionDocId: correctionDoc._id, 
+      correctionLogId: newlyAddedCorrectionId, 
     });
   } catch (error: any) {
     console.log("Correction Request Error:", error);
