@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Loader2, Shield, Clock, ExternalLink, AlertTriangle, Pen, History } from "lucide-react";
+import {
+  Loader2,
+  Shield,
+  Clock,
+  ExternalLink,
+  AlertTriangle,
+  History,
+} from "lucide-react";
 
 // --- Types ---
 interface GDRegister {
@@ -40,17 +47,12 @@ export default function AdminGDViewer() {
     router.push(`/admin/gd/${id}`);
   };
 
-  // ✅ Global Correction Handlers
-  const handleGlobalCorrection = () => {
-    router.push("/admin/gd/update/");
+  // ✅ View All Correction Requests
+  const handleViewAllCorrectionRequests = () => {
+    router.push("/admin/correction-request");
   };
 
-  const handleViewCorrections = () => {
-    router.push("/admin/gd/corrections");
-  };
-
-  // ✅ Specific Correction Handler (New)
-  // ✅ Specific Correction Handler (Updated for Query Params)
+  // ✅ View Corrections for Specific GD
   const handleViewSpecificCorrections = (id: string) => {
     router.push(`/admin/gd/corrections?gdId=${id}`);
   };
@@ -65,45 +67,53 @@ export default function AdminGDViewer() {
 
   return (
     <div className="space-y-6">
-      {/* Component Header */}
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 pb-4">
         <div>
-          <h2 className="text-2xl font-black uppercase tracking-tight">Master GD Viewer</h2>
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Real-time Station Monitoring</p>
+          <h2 className="text-2xl font-black uppercase tracking-tight">
+            Master GD Viewer
+          </h2>
+          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
+            Real-time Station Monitoring
+          </p>
         </div>
 
         <div className="flex items-center gap-8">
-          {/* Action Buttons */}
+          {/* Correction Requests Button */}
           <div className="flex gap-3">
-
             <button
-              onClick={handleGlobalCorrection}
+              onClick={handleViewAllCorrectionRequests}
               className="flex items-center gap-2 px-4 py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-800 transition-colors shadow-sm"
             >
-              <Pen size={14} /> Make Correction
+              <History size={14} /> Correction Requests
             </button>
           </div>
 
           {/* Stats */}
           <div className="text-right">
-            <span className="text-xs font-bold text-gray-400 uppercase block">Total Registers</span>
+            <span className="text-xs font-bold text-gray-400 uppercase block">
+              Total Registers
+            </span>
             <span className="text-2xl font-black">{gds.length}</span>
           </div>
         </div>
       </div>
 
-      {/* List of Registers */}
+      {/* Register List */}
       <div className="space-y-4">
         {gds.map((gd) => (
-          <div key={gd._id} className="bg-white border border-gray-200 shadow-sm overflow-hidden rounded-lg transition-all hover:shadow-md">
-
-            {/* --- REGISTER CARD --- */}
+          <div
+            key={gd._id}
+            className="bg-white border border-gray-200 shadow-sm overflow-hidden rounded-lg transition-all hover:shadow-md"
+          >
             <div className="p-6 flex items-center justify-between group bg-white">
               <div className="flex items-center gap-6">
                 {/* Date Badge */}
                 <div className="text-center bg-gray-50 p-3 rounded border border-gray-100 min-w-[80px]">
                   <span className="block text-xs font-bold text-gray-400 uppercase">
-                    {new Date(gd.diaryDate).toLocaleDateString('en-GB', { month: 'short' })}
+                    {new Date(gd.diaryDate).toLocaleDateString("en-GB", {
+                      month: "short",
+                    })}
                   </span>
                   <span className="block text-2xl font-black text-gray-800 leading-none my-0.5">
                     {new Date(gd.diaryDate).getDate()}
@@ -120,7 +130,7 @@ export default function AdminGDViewer() {
                       {gd.division}
                     </span>
 
-                    {/* Corrections Indicator */}
+                    {/* Edited Indicator */}
                     {gd.hasCorrections && (
                       <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-widest rounded">
                         <AlertTriangle size={10} /> Edited
@@ -131,6 +141,7 @@ export default function AdminGDViewer() {
                       {gd.post}
                     </h2>
                   </div>
+
                   <div className="flex items-center gap-4 text-xs font-medium text-gray-500">
                     <span className="flex items-center gap-1">
                       <Shield size={12} /> Serial: {gd.pageSerialNo}
@@ -142,9 +153,8 @@ export default function AdminGDViewer() {
                 </div>
               </div>
 
-              {/* Actions Area */}
+              {/* Actions */}
               <div className="flex items-center gap-3">
-                {/* ✅ Render specific corrections button ONLY if edited */}
                 {gd.hasCorrections && (
                   <button
                     onClick={() => handleViewSpecificCorrections(gd._id)}
@@ -153,6 +163,7 @@ export default function AdminGDViewer() {
                     <History size={14} /> View Edits
                   </button>
                 )}
+
                 <button
                   onClick={() => handleViewFull(gd._id)}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-200 transition-colors"
