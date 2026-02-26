@@ -76,9 +76,9 @@ function CorrectionPageClient() {
     reqName: "",
     reqRank: "",
     reqForceNo: "",
-    appName: "",
-    appRank: "",
-    appForceNo: "",
+    fwdName: "",
+    fwdRank: "",
+    fwdForceNo: "",
   });
 
   /* =================================================================================
@@ -174,14 +174,14 @@ function CorrectionPageClient() {
           rank: adminData.reqRank,
           forceNumber: adminData.reqForceNo,
         },
-        approvedBy: {
-          name: adminData.appName,
-          rank: adminData.appRank,
-          forceNumber: adminData.appForceNo,
+        forwardedBy: {
+          name: adminData.fwdName,
+          rank: adminData.fwdRank,
+          forceNumber: adminData.fwdForceNo,
         },
       };
 
-      const res = await fetch("/api/gd/update-entry", {
+      const res = await fetch("/api/gd/update-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
