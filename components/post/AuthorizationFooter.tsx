@@ -118,9 +118,9 @@ export default function AuthorizationFooter({
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row items-center justify-between pt-4 border-t border-gray-200 gap-4">
-        <div className="text-[10px] text-gray-400 flex items-center gap-1 w-full sm:w-auto">
+        {/* <div className="text-[10px] text-gray-400 flex items-center gap-1 w-full sm:w-auto">
           <Fingerprint className="w-3 h-3" /> Ref: {entryId}
-        </div>
+        </div> */}
         <div className="flex w-full sm:w-auto gap-3">
           <button 
             type="button" 
