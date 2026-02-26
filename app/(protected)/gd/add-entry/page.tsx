@@ -11,7 +11,7 @@ interface UserProfile {
   rank: string;
   forceNumber: string;
   division: string;
-  postCode: string; // changed
+  postCode: string;
 }
 
 export default function AddGDEntryPage() {
@@ -19,7 +19,6 @@ export default function AddGDEntryPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchingUser, setFetchingUser] = useState(true);
-
   const [time, setTime] = useState(new Date());
 
   const [formData, setFormData] = useState({
@@ -36,9 +35,24 @@ export default function AddGDEntryPage() {
     const fetchUser = async () => {
       try {
         const res = await axios.get("/api/auth/me", {
-          params: { fields: "name,rank,forceNumber,division,postCode" } // changed
+          params: { fields: "name,rank,forceNumber,division,postCode" }
         });
-        setUser(res.data.user);
+
+        const baseUser = res.data.user;
+
+        if (baseUser?.visitingOfficer) {
+          setUser({
+            _id: baseUser.visitingOfficer._id,
+            name: baseUser.visitingOfficer.name,
+            rank: baseUser.visitingOfficer.rank,
+            forceNumber: baseUser.visitingOfficer.forceNumber,
+            division: baseUser.division,
+            postCode: baseUser.postCode,
+          });
+        } else {
+          setUser(baseUser);
+        }
+
       } catch {
         router.push("/login");
       } finally {
@@ -67,13 +81,12 @@ export default function AddGDEntryPage() {
     if (!isAcknowledged) return;
 
     setLoading(true);
-
     const exactClickTime = new Date();
 
     const payload = {
       ...formData,
       division: user.division,
-      postCode: user.postCode, // changed
+      postCode: user.postCode,
       officerId: user._id,
       officerName: user.name,
       rank: user.rank,
@@ -209,7 +222,6 @@ export default function AddGDEntryPage() {
 
           <div className="space-y-2 flex-1 flex flex-col">
             <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Occurrence Details</label>
-
             <div className="flex-1 w-full border border-gray-200 bg-white shadow-inner relative">
               <textarea
                 name="details"
@@ -246,7 +258,7 @@ export default function AddGDEntryPage() {
         </div>
 
         {isAckModalOpen && (
-          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-[1px] flex items-center justify-center p-4">
             <div className="bg-white border-2 border-black w-full max-w-2xl shadow-2xl relative flex flex-col">
               <button
                 onClick={() => setIsAckModalOpen(false)}
@@ -292,6 +304,7 @@ export default function AddGDEntryPage() {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
