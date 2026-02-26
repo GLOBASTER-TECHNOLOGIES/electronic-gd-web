@@ -182,7 +182,7 @@ function SingleGDViewContent() {
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-gray-400" />
-                <span>{gd.postName}</span>
+                <span>Post :{gd.postCode}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-gray-400" />
@@ -201,10 +201,6 @@ function SingleGDViewContent() {
         </div>
       </div>
 
-      {/* --- WARNING STRIP --- */}
-      <div className="bg-[#fff9e6] border-y border-[#ffeeba] text-[#9a7b1e] text-center py-3 text-xs font-bold uppercase tracking-wide">
-        Preview Mode • Click Download to get the official form format
-      </div>
 
       {/* --- DATA TABLE --- */}
       <div className="max-w-[1400px] mx-auto mt-8 px-4 md:px-8">
