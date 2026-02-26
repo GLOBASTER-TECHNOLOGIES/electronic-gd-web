@@ -149,10 +149,10 @@ export default function AddGDEntryPage() {
               </p>
             </div>
             <div className="text-right">
-              <div className="inline-block border border-gray-900 px-2 py-1">
+              {/* <div className="inline-block border border-gray-900 px-2 py-1">
                 <p className="text-[10px] font-bold uppercase">Form No.</p>
                 <p className="text-sm font-mono font-bold">RPF-GD-2026</p>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -241,10 +241,6 @@ export default function AddGDEntryPage() {
           </div>
 
           <div className="pt-6 border-t-2 border-black flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-red-600 font-bold uppercase">
-              <ShieldAlert size={14} />
-              <span>• Official Record •</span>
-            </div>
 
             <button
               onClick={handleInitialSubmit}
