@@ -161,13 +161,13 @@ function SingleGDViewContent() {
             Back to Dashboard
           </button>
 
-          <button
+          {/* <button
             onClick={handleDownloadPDF}
             className="flex items-center gap-2 bg-white text-[#181f32] px-5 py-2.5 rounded shadow-sm hover:bg-gray-100 transition-all text-xs font-bold uppercase tracking-wide"
           >
             <Download size={16} />
             Download Official PDF
-          </button>
+          </button> */}
         </div>
 
         {/* Title & Metadata Row */}
@@ -183,7 +183,7 @@ function SingleGDViewContent() {
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-gray-400" />
-                <span>{gd.postName}</span>
+                <span>Post : {gd.postCode}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-gray-400" />
@@ -200,11 +200,6 @@ function SingleGDViewContent() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* --- WARNING STRIP --- */}
-      <div className="bg-[#fff9e6] border-y border-[#ffeeba] text-[#9a7b1e] text-center py-3 text-xs font-bold uppercase tracking-wide">
-        Preview Mode • Click Download to get the official form format
       </div>
 
       {/* --- DATA TABLE --- */}
