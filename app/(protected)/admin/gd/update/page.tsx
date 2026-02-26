@@ -56,7 +56,7 @@ const SearchConsole = ({
   searchParams,
   setSearchParams,
   onSearch,
-  onBackToAdmin
+  onBackToAdmin,
 }: {
   loading: boolean;
   error: string;
@@ -64,10 +64,8 @@ const SearchConsole = ({
   setSearchParams: (v: any) => void;
   onSearch: (e: React.FormEvent) => void;
   onBackToAdmin: () => void;
-
-
-
 }) => {
+
   const router = useRouter(); // ✅ add this
 
   const handleBack = () => {
@@ -531,6 +529,7 @@ const CorrectionPage = () => {
       searchParams={searchParams}
       setSearchParams={setSearchParams}
       onSearch={handleSearch}
+      onBackToAdmin={handleBackToAdmin}
     />;
   }
 
