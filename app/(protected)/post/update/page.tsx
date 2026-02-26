@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-// 1. Import useSearchParams from Next.js
+import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchConsole, { ISearchParamsState } from "@/components/post/SearchConsole";
 import CorrectionHeader from "@/components/post/CorrectionHeader";
@@ -9,7 +8,10 @@ import EntryMetadata from "@/components/post/EntryMetadata";
 import CorrectionWorkspace, { IFormData } from "@/components/post/CorrectionWorkspace";
 import AuthorizationFooter, { IAdminData } from "@/components/post/AuthorizationFooter";
 
-// Core Database Types belong in the primary fetch container
+/* =================================================================================
+   DATABASE TYPES
+================================================================================= */
+
 export interface IGDEntry {
   _id: string;
   entryNo: number;
@@ -30,9 +32,25 @@ export interface IGDDocument {
   entries: IGDEntry[];
 }
 
-export default function CorrectionPage() {
+/* =================================================================================
+   DEFAULT EXPORT WITH SUSPENSE WRAPPER
+================================================================================= */
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <CorrectionPageClient />
+    </Suspense>
+  );
+}
+
+/* =================================================================================
+   CLIENT COMPONENT (All Logic Here)
+================================================================================= */
+
+function CorrectionPageClient() {
   const urlParams = useSearchParams();
-  const postCodeFromUrl = urlParams.get("postCode") || ""; // Grabs 'postCode' from /post/update?postCode=XYZ
+  const postCodeFromUrl = urlParams.get("postCode") || "";
 
   const [view, setView] = useState<"SEARCH" | "CORRECT">("SEARCH");
   const [loading, setLoading] = useState(false);
@@ -40,9 +58,9 @@ export default function CorrectionPage() {
   const [error, setError] = useState("");
 
   const [searchParams, setSearchParams] = useState<ISearchParamsState>({
-    station: postCodeFromUrl, // You can store it here if you want
-    date: new Date().toISOString().split('T')[0],
-    entryNo: ""
+    station: postCodeFromUrl,
+    date: new Date().toISOString().split("T")[0],
+    entryNo: "",
   });
 
   const [selectedEntry, setSelectedEntry] = useState<IGDEntry | null>(null);
@@ -63,68 +81,76 @@ export default function CorrectionPage() {
     appForceNo: "DL-0551",
   });
 
-  // --- LOGIC: SEARCH ---
-  // --- LOGIC: SEARCH ---
+  /* =================================================================================
+     SEARCH LOGIC
+  ================================================================================= */
+
   const handleSearch = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!searchParams.entryNo) return;
+    e.preventDefault();
+    if (!searchParams.entryNo) return;
 
-  if (!postCodeFromUrl) {
-    setError("No Post Code found in URL. Please navigate from the dashboard.");
-    return;
-  }
-
-  setLoading(true);
-  setError("");
-
-  try {
-    const query = new URLSearchParams({
-      postCode: postCodeFromUrl,
-      date: searchParams.date,
-      mode: "post" // ✅ Added flag
-    }).toString();
-
-    const res = await fetch(`/api/gd/get-entry?${query}`);
-
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Server did not return JSON. Check API route.");
+    if (!postCodeFromUrl) {
+      setError("No Post Code found in URL. Please navigate from dashboard.");
+      return;
     }
 
-    const result = await res.json();
+    setLoading(true);
+    setError("");
 
-    if (!result.success) throw new Error(result.message || "Failed to fetch");
-    if (!result.data) {
-      throw new Error(`No General Diary found for ${postCodeFromUrl} on this date.`);
+    try {
+      const query = new URLSearchParams({
+        postCode: postCodeFromUrl,
+        date: searchParams.date,
+        mode: "post",
+      }).toString();
+
+      const res = await fetch(`/api/gd/get-entry?${query}`);
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server did not return JSON.");
+      }
+
+      const result = await res.json();
+
+      if (!result.success) throw new Error(result.message || "Failed to fetch");
+      if (!result.data) {
+        throw new Error(`No General Diary found for ${postCodeFromUrl} on this date.`);
+      }
+
+      const gdDoc: IGDDocument = result.data;
+      const targetEntryNo = parseInt(searchParams.entryNo);
+
+      const foundEntry = gdDoc.entries.find(
+        (entry) => entry.entryNo === targetEntryNo
+      );
+
+      if (!foundEntry) {
+        throw new Error(`Entry #${targetEntryNo} does not exist in this GD.`);
+      }
+
+      setParentGD(gdDoc);
+      setSelectedEntry(foundEntry);
+
+      setFormData({
+        abstract: foundEntry.abstract,
+        details: foundEntry.details,
+        reason: "",
+      });
+
+      setView("CORRECT");
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Search Error:", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const gdDoc: IGDDocument = result.data;
-    const targetEntryNo = parseInt(searchParams.entryNo);
-    const foundEntry = gdDoc.entries.find((entry) => entry.entryNo === targetEntryNo);
+  /* =================================================================================
+     SUBMIT LOGIC
+  ================================================================================= */
 
-    if (!foundEntry) {
-      throw new Error(`Entry #${targetEntryNo} does not exist in this GD.`);
-    }
-
-    setParentGD(gdDoc);
-    setSelectedEntry(foundEntry);
-    setFormData({
-      abstract: foundEntry.abstract,
-      details: foundEntry.details,
-      reason: ""
-    });
-
-    setView("CORRECT");
-
-  } catch (err: any) {
-    setError(err.message);
-    console.error("Search Error:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // --- LOGIC: SUBMIT ---
   const handleSubmitCorrection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEntry || !parentGD) return;
@@ -140,27 +166,25 @@ export default function CorrectionPage() {
         diaryDate: parentGD.diaryDate,
         newData: {
           abstract: formData.abstract,
-          details: formData.details
+          details: formData.details,
         },
         reason: formData.reason,
         requestedBy: {
           name: adminData.reqName,
           rank: adminData.reqRank,
           forceNumber: adminData.reqForceNo,
-          // officerId: "65c4a7f0e5b9c02d12345678"
         },
         approvedBy: {
           name: adminData.appName,
           rank: adminData.appRank,
           forceNumber: adminData.appForceNo,
-          // officerId: "65c4a7f0e5b9c02d87654321",
-        }
+        },
       };
 
       const res = await fetch("/api/gd/update-entry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const result = await res.json();
@@ -170,9 +194,9 @@ export default function CorrectionPage() {
       }
 
       alert("Correction Signed & Logged Successfully!");
+
       setView("SEARCH");
       setSearchParams({ ...searchParams, entryNo: "" });
-
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -182,10 +206,18 @@ export default function CorrectionPage() {
 
   const handleCopyOriginal = () => {
     if (!selectedEntry) return;
-    setFormData(prev => ({ ...prev, abstract: selectedEntry.abstract, details: selectedEntry.details }));
+
+    setFormData((prev) => ({
+      ...prev,
+      abstract: selectedEntry.abstract,
+      details: selectedEntry.details,
+    }));
   };
 
-  // --- RENDER ---
+  /* =================================================================================
+     RENDER
+  ================================================================================= */
+
   if (view === "SEARCH") {
     return (
       <SearchConsole
@@ -207,18 +239,21 @@ export default function CorrectionPage() {
           entryNo={selectedEntry.entryNo}
           onBack={() => setView("SEARCH")}
         />
+
         <EntryMetadata
           postCode={parentGD.postCode}
           entryTime={selectedEntry.entryTime}
           diaryDate={parentGD.diaryDate}
           signature={selectedEntry.signature}
         />
+
         <CorrectionWorkspace
-          original={{ abstract: selectedEntry.abstract, details: selectedEntry.details }}
+          original={selectedEntry}
           formData={formData}
           setFormData={setFormData}
           onRestore={handleCopyOriginal}
         />
+
         <AuthorizationFooter
           formData={formData}
           setFormData={setFormData}
