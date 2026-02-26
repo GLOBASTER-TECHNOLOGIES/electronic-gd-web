@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Loader2, Shield, Clock, ExternalLink, AlertTriangle, Pen } from "lucide-react";
+import { Loader2, Shield, Clock, ExternalLink, AlertTriangle, Pen, History } from "lucide-react";
 
 // --- Types ---
 interface GDRegister {
@@ -40,9 +40,19 @@ export default function AdminGDViewer() {
     router.push(`/admin/gd/${id}`);
   };
 
-  // ✅ New Global Correction Handler
+  // ✅ Global Correction Handlers
   const handleGlobalCorrection = () => {
     router.push("/admin/gd/update/");
+  };
+
+  const handleViewCorrections = () => {
+    router.push("/admin/gd/corrections");
+  };
+
+  // ✅ Specific Correction Handler (New)
+  // ✅ Specific Correction Handler (Updated for Query Params)
+  const handleViewSpecificCorrections = (id: string) => {
+    router.push(`/admin/gd/corrections?gdId=${id}`);
   };
 
   if (loading) {
@@ -63,13 +73,16 @@ export default function AdminGDViewer() {
         </div>
 
         <div className="flex items-center gap-8">
-          {/* ✅ Global Make Correction Button */}
-          <button
-            onClick={handleGlobalCorrection}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-50 hover:text-black transition-colors shadow-sm"
-          >
-            <Pen size={14} /> Make Correction
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+
+            <button
+              onClick={handleGlobalCorrection}
+              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-800 transition-colors shadow-sm"
+            >
+              <Pen size={14} /> Make Correction
+            </button>
+          </div>
 
           {/* Stats */}
           <div className="text-right">
@@ -129,11 +142,20 @@ export default function AdminGDViewer() {
                 </div>
               </div>
 
-              {/* Actions Area - Single Button Only */}
-              <div>
+              {/* Actions Area */}
+              <div className="flex items-center gap-3">
+                {/* ✅ Render specific corrections button ONLY if edited */}
+                {gd.hasCorrections && (
+                  <button
+                    onClick={() => handleViewSpecificCorrections(gd._id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold uppercase tracking-wider rounded hover:bg-amber-100 transition-colors"
+                  >
+                    <History size={14} /> View Edits
+                  </button>
+                )}
                 <button
                   onClick={() => handleViewFull(gd._id)}
-                  className="flex items-center gap-2 px-4 py-2 bg-black text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-200 transition-colors"
                 >
                   Open Register <ExternalLink size={14} />
                 </button>
