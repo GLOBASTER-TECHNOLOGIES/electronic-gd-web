@@ -19,10 +19,12 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const post = searchParams.get("post"); // OLD compatibility
-    const postCode = searchParams.get("postCode"); // NEW correct field
+
+    const post = searchParams.get("post");
+    const postCode = searchParams.get("postCode");
     const dateParam = searchParams.get("date");
     const id = searchParams.get("id");
+    const mode = searchParams.get("mode"); // ✅ NEW FLAG
 
     // ====================================================
     // CASE 1: FETCH FULL GD BY ID
@@ -73,10 +75,40 @@ export async function GET(request: NextRequest) {
           .select("-__v")
           .lean();
 
-        return NextResponse.json(
-          { success: true, data: gd || null },
-          { status: 200 },
-        );
+        if (!gd) {
+          return NextResponse.json(
+            { success: true, data: null },
+            { status: 200 },
+          );
+        }
+
+        // ====================================================
+        // 🛑 CORRECTION WINDOW CHECK (POST MODE ONLY)
+        // ====================================================
+        if (mode === "post") {
+          const gdStartIST = normalizeDiaryDate(gd.diaryDate);
+
+          // Add 34 hours
+          const cutoffTime = new Date(
+            gdStartIST.getTime() + 34 * 60 * 60 * 1000,
+          );
+
+          const now = new Date();
+
+          if (now > cutoffTime) {
+            return NextResponse.json(
+              {
+                success: false,
+                correctionClosed: true,
+                message:
+                  "Correction window closed. Modifications allowed only within 34 hours from GD start time.",
+              },
+              { status: 403 },
+            );
+          }
+        }
+
+        return NextResponse.json({ success: true, data: gd }, { status: 200 });
       }
 
       // 🔹 If ONLY postCode provided → return ALL GDs
@@ -95,9 +127,7 @@ export async function GET(request: NextRequest) {
     // CASE 3: ADMIN OVERVIEW (Summary Only)
     // ====================================================
     const summaries = await GeneralDiary.aggregate([
-      {
-        $sort: { diaryDate: -1, updatedAt: -1 },
-      },
+      { $sort: { diaryDate: -1, updatedAt: -1 } },
       {
         $project: {
           _id: 1,
