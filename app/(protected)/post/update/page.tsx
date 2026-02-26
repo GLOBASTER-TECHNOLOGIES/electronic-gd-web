@@ -73,12 +73,12 @@ function CorrectionPageClient() {
   });
 
   const [adminData, setAdminData] = useState<IAdminData>({
-    reqName: "Insp. Vikram Singh",
-    reqRank: "SHO",
-    reqForceNo: "DL-8821",
-    appName: "DCP Amit Kumar",
-    appRank: "DCP",
-    appForceNo: "DL-0551",
+    reqName: "",
+    reqRank: "",
+    reqForceNo: "",
+    appName: "",
+    appRank: "",
+    appForceNo: "",
   });
 
   /* =================================================================================
