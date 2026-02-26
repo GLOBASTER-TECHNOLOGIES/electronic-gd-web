@@ -105,7 +105,7 @@ export default function OfficerList({ onEdit, postCode }: OfficerListProps) {
 
     try {
       const res = await axios.delete("/api/officer/delete", {
-        data: { id }
+        params: { id } // ✅ FIXED
       });
 
       if (res.data.success) {
