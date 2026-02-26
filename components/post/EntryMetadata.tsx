@@ -25,7 +25,7 @@ export default function EntryMetadata({ postCode, entryTime, diaryDate, signatur
       </div>
       <div className="flex items-center gap-2 text-gray-600">
         <User className="w-4 h-4 text-gray-400" />
-        <span>Original: <span className="font-semibold text-gray-900">{signature.rank} {signature.officerName}</span></span>
+        <span>Officer: <span className="font-semibold text-gray-900">{signature.rank} {signature.officerName}</span></span>
       </div>
     </div>
   );
