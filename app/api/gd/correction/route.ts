@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
-import GdCorrection from "@/models/gdCorrection.model"; // Update this path to your actual model file
+import GdCorrection from "@/models/gdCorrection.model";
 import dbConnect from "@/config/dbConnect";
 
 export async function GET(req: NextRequest) {
-  console.log("req  came")
   try {
     // 1. Ensure database connection
     await dbConnect();
@@ -29,16 +28,30 @@ export async function GET(req: NextRequest) {
     }
 
     // 4. Query the database
-    // We sort by 'correctedAt' descending to show the newest edits first
-    const corrections = await GdCorrection.find({ dailyGDId: dailyGDId })
-      .sort({ correctedAt: -1 })
-      .lean(); // .lean() improves performance for read-only operations
+    // Use findOne because there is only ONE container document per dailyGDId
+    const correctionContainer = await GdCorrection.findOne({ dailyGDId: dailyGDId }).lean();
 
-    // 5. Return the data
+    // If no corrections exist for this day, return an empty array
+    if (!correctionContainer || !correctionContainer.history) {
+      return NextResponse.json(
+        { success: true, data: [] },
+        { status: 200 }
+      );
+    }
+
+    // 5. Extract and sort the array
+    // We sort the history array in memory (newest first) based on correctedAt
+    const sortedHistory = correctionContainer.history.sort((a: any, b: any) => {
+      const dateA = new Date(a.correctedAt).getTime();
+      const dateB = new Date(b.correctedAt).getTime();
+      return dateB - dateA; // Descending order
+    });
+
+    // 6. Return the flattened, sorted array
     return NextResponse.json(
       {
         success: true,
-        data: corrections,
+        data: sortedHistory,
       },
       { status: 200 },
     );
