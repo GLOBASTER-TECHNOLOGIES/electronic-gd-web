@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Search, Hash, Loader2, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Search, Hash, Loader2, AlertTriangle, ArrowLeft, Calendar } from "lucide-react";
 
 export interface ISearchParamsState {
   station: string;
@@ -52,6 +52,7 @@ export default function SearchConsole({
         </div>
 
         <form onSubmit={onSearch} className="p-8 space-y-5">
+
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> {error}
@@ -59,6 +60,8 @@ export default function SearchConsole({
           )}
 
           <div className="grid grid-cols-2 gap-4">
+
+            {/* Entry Number */}
             <div>
               <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-1.5">
                 <Hash className="w-3 h-3" /> Entry No.
@@ -77,11 +80,31 @@ export default function SearchConsole({
                 className="w-full p-3 border border-slate-300 rounded text-sm outline-none focus:border-slate-500 font-mono"
               />
             </div>
+
+            {/* Date Field */}
+            <div>
+              <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-1.5">
+                <Calendar className="w-3 h-3" /> Date
+              </label>
+              <input
+                type="date"
+                required
+                value={searchParams.date}
+                onChange={(e) =>
+                  setSearchParams({
+                    ...searchParams,
+                    date: e.target.value
+                  })
+                }
+                className="w-full p-3 border border-slate-300 rounded text-sm outline-none focus:border-slate-500"
+              />
+            </div>
+
           </div>
 
           <button
             type="submit"
-            disabled={loading || !searchParams.entryNo}
+            disabled={loading || !searchParams.entryNo || !searchParams.date}
             className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded text-sm font-bold shadow-md flex items-center justify-center gap-2 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
