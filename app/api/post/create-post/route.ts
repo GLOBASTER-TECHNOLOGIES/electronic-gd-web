@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Post Name, Code, Division and Password are required.",
+          message: "Code, Division and Password are required.",
         },
         { status: 400 },
       );
