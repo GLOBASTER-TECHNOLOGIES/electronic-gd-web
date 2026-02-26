@@ -102,7 +102,7 @@ function PostGDRecordsContent() {
                         </h1>
                         <p className="text-sm text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
                             <Shield size={16} className="text-yellow-500" />
-                            Station Unit: {postCode}
+                            Post: {postCode}
                         </p>
                     </div>
 
