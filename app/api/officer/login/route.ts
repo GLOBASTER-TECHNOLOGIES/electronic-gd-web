@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         mustChangePassword: officer.mustChangePassword,
       },
     });
-    console.log(officer);
+    // console.log(officer);
     /* ==========================================================
        🔒 UPDATED COOKIE NAMES
     ========================================================== */
