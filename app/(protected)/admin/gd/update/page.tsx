@@ -5,6 +5,7 @@ import {
   Shield, Search, Calendar, Hash, MapPin, Loader2, AlertTriangle, ArrowRightLeft,
   Copy, FileBadge, Fingerprint, CheckCircle2, Clock, User, ArrowLeft
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 /* =================================================================================
    1. SHARED TYPES
@@ -54,19 +55,39 @@ const SearchConsole = ({
   error,
   searchParams,
   setSearchParams,
-  onSearch
+  onSearch,
+  onBackToAdmin
 }: {
   loading: boolean;
   error: string;
   searchParams: any;
   setSearchParams: (v: any) => void;
   onSearch: (e: React.FormEvent) => void;
+  onBackToAdmin: () => void;
+
+
+
 }) => {
+  const router = useRouter(); // ✅ add this
+
+  const handleBack = () => {
+    router.push("/admin"); // change path if needed
+  };
+
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
       <div className="w-full max-w-md bg-white shadow-xl rounded-sm border border-slate-200 overflow-hidden">
         <div className="bg-slate-900 p-6 text-center border-b-4 border-yellow-500">
-          <Shield className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
+          <button
+            type="button"
+            onClick={handleBack}
+            className="absolute left-4 top-4 text-[10px] bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-white flex items-center gap-1"
+          >
+            <ArrowLeft className="w-6 h-6" />
+            Back to Admin
+          </button>
+          {/* <Shield className="w-10 h-10 text-yellow-500 mx-auto mb-3" /> */}
           <h1 className="text-xl font-bold text-white uppercase tracking-wider">GD Correction Console</h1>
           <p className="text-slate-400 text-xs mt-1">Authorized Personnel Only</p>
         </div>
@@ -349,6 +370,14 @@ const CorrectionPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+
+
+  const router = useRouter();
+
+  const handleBackToAdmin = () => {
+    router.push("/admin"); // change path if your admin route is different
+  };
+
   const [searchParams, setSearchParams] = useState({
     station: "",
     date: new Date().toISOString().split('T')[0],
@@ -510,6 +539,17 @@ const CorrectionPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 font-sans text-gray-800 flex justify-center">
       <div className="w-full max-w-5xl bg-white shadow-xl border border-gray-300 rounded-sm overflow-hidden flex flex-col">
+
+        {/* ADMIN BACK BUTTON */}
+        <div className="bg-slate-800 text-white px-6 py-3 flex justify-end">
+          <button
+            onClick={handleBackToAdmin}
+            className="text-xs font-semibold bg-slate-700 hover:bg-slate-600 px-4 py-1.5 rounded flex items-center gap-2 transition"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Back to Admin
+          </button>
+        </div>
 
         <CorrectionHeader
           entryNo={selectedEntry.entryNo}
