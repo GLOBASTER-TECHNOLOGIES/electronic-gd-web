@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dbConnect from "@/config/dbConnect";
 import Officer from "@/models/officer.model";
@@ -20,12 +19,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let postPayload;
     try {
-      postPayload = jwt.verify(
-        postToken,
-        process.env.JWT_ACCESS_SECRET!
-      ) as any;
+      jwt.verify(postToken, process.env.JWT_ACCESS_SECRET!);
     } catch {
       return NextResponse.json(
         { message: "Invalid post session" },
@@ -33,28 +28,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2️⃣ Get Officer Credentials
-    const { forceNumber, password } = await request.json();
+    // 2️⃣ Get Force Number Only
+    const { forceNumber } = await request.json();
 
-    const officer = await Officer.findOne({ forceNumber }).select("+password");
+    if (!forceNumber) {
+      return NextResponse.json(
+        { message: "Force number is required" },
+        { status: 400 }
+      );
+    }
+
+    // 3️⃣ Find Officer
+    const officer = await Officer.findOne({ forceNumber });
 
     if (!officer) {
       return NextResponse.json(
-        { message: "Invalid credentials" },
-        { status: 401 }
+        { message: "Officer not found" },
+        { status: 404 }
       );
     }
 
-    const isMatch = await bcrypt.compare(password, officer.password);
-
-    if (!isMatch) {
-      return NextResponse.json(
-        { message: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    // 3️⃣ Create Visiting Token (Separate)
+    // 4️⃣ Create Visiting Token (No Password Validation)
     const visitingToken = jwt.sign(
       {
         id: officer._id,
@@ -62,15 +56,15 @@ export async function POST(request: NextRequest) {
         officerName: officer.name,
         rank: officer.rank,
         forceNumber: officer.forceNumber,
-        homePostId: officer.postId, // optional
+        homePostId: officer.postId,
       },
       VISITING_SECRET,
       { expiresIn: "30m" }
     );
 
-    // 4️⃣ Send Response
+    // 5️⃣ Send Response
     const res = NextResponse.json({
-      message: "Visiting officer login successful",
+      message: "Visiting officer identified",
       officer: {
         id: officer._id,
         name: officer.name,
@@ -79,16 +73,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 🍪 Set Separate Visiting Cookie
+    // 🍪 Set Visiting Cookie
     res.cookies.set("visitingAccessToken", visitingToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 30, // 30 minutes
+      maxAge: 60 * 30,
     });
 
     return res;
+
   } catch (error) {
     console.error("Visiting Login Error:", error);
     return NextResponse.json(
